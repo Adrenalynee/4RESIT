@@ -1,0 +1,11 @@
+server/.env
+server/node_modules
+
+client/.env
+client/node_modules
+
+sujet.txt
+.env
+
+nginx/certificate.crt
+nginx/private.key
