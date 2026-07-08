@@ -14,7 +14,7 @@ services:
     build: ./server
     container_name: server
     environment:
-      DATABASE_URL: postgres://supmeal_user:supmeal_pass@db:5432/supmeal
+     DATABASE_URL: postgres://supmeal_user:supmeal_pass@db:5432/supmeal
     ports:
       - "5000:5000"
     volumes:
@@ -23,6 +23,16 @@ services:
       - db
 
   client:
+    image: node:20-alpine
+    working_dir: /app
+    command: sh -c "rm -rf node_modules package-lock.json && npm i --include=optional && npm run build"
+    container_name: client
+    volumes:
+      - ./client:/app
+    depends_on:
+      - server
+
+  webserver:
     image: nginx:1.29.0-alpine
     ports:
       - "80:80"
@@ -34,6 +44,7 @@ services:
       - ./nginx/certificate.crt:/ssl/certificate.crt
     depends_on:
       - server
+      - client
 
 volumes:
     db_data:
