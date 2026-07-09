@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="gold" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#8a6a30"/>
+      <stop offset="50%" stop-color="#e8c778"/>
+      <stop offset="100%" stop-color="#fff6dd"/>
+    </linearGradient>
+  </defs>
+  <g transform="translate(32,33) scale(1.2,1.25) translate(-32,-33)">
+    <text
+      x="32"
+      y="45"
+      text-anchor="middle"
+      font-family="'Bodoni Moda', Georgia, 'Times New Roman', serif"
+      font-size="32"
+      font-weight="900"
+      letter-spacing="1"
+      fill="url(#gold)"
+    >SM</text>
+  </g>
+</svg>
