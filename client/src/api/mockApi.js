@@ -342,6 +342,31 @@ export async function addComment(recipeId, userId, text) {
   return delay(comment)
 }
 
+export async function updateComment(recipeId, commentId, userId, text) {
+  const db = loadDb()
+  const recipe = db.recipes.find((r) => r.id === recipeId)
+  if (!recipe) throw new Error('Recette introuvable')
+  const comment = recipe.comments.find((c) => c.id === commentId)
+  if (!comment) throw new Error('Commentaire introuvable')
+  if (comment.userId !== userId) throw new Error("Vous ne pouvez modifier que vos propres commentaires")
+  comment.text = text
+  comment.editedAt = new Date().toISOString()
+  saveDb(db)
+  return delay(comment)
+}
+
+export async function deleteComment(recipeId, commentId, userId) {
+  const db = loadDb()
+  const recipe = db.recipes.find((r) => r.id === recipeId)
+  if (!recipe) throw new Error('Recette introuvable')
+  const comment = recipe.comments.find((c) => c.id === commentId)
+  if (!comment) throw new Error('Commentaire introuvable')
+  if (comment.userId !== userId) throw new Error("Vous ne pouvez supprimer que vos propres commentaires")
+  recipe.comments = recipe.comments.filter((c) => c.id !== commentId)
+  saveDb(db)
+  return delay(true)
+}
+
 // ---- Messagerie ----
 
 export async function getMessages(cookbookId) {

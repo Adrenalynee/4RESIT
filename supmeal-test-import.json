@@ -1,0 +1,69 @@
+{
+  "exportedAt": "2026-07-07T00:00:00.000Z",
+  "cookbooks": [
+    {
+      "id": "test-cb1",
+      "name": "Cookbook de test import",
+      "description": "Cookbook généré pour tester la fonctionnalité d'import.",
+      "members": [],
+      "recipeIds": []
+    }
+  ],
+  "recipes": [
+    {
+      "id": "test-r1",
+      "title": "Tarte aux pommes",
+      "cookbookId": "test-cb1",
+      "image": "https://images.unsplash.com/photo-1568571780765-9276ac8b75a2?w=600",
+      "prepTime": 25,
+      "cookTime": 40,
+      "servings": 6,
+      "weeklyViews": 12,
+      "tags": ["Dessert", "Facile"],
+      "ingredients": [
+        { "name": "Pommes", "quantity": "6", "unit": "pièces" },
+        { "name": "Pâte brisée", "quantity": "1", "unit": "rouleau" },
+        { "name": "Sucre", "quantity": "80", "unit": "g" },
+        { "name": "Beurre", "quantity": "30", "unit": "g" },
+        { "name": "Cannelle", "quantity": "1", "unit": "c. à café" }
+      ],
+      "steps": [
+        "Préchauffer le four à 180°C.",
+        "Éplucher et couper les pommes en lamelles.",
+        "Étaler la pâte dans un moule et y déposer les pommes en rosace.",
+        "Saupoudrer de sucre et de cannelle, ajouter quelques noisettes de beurre.",
+        "Cuire 35-40 min jusqu'à ce que la pâte soit dorée."
+      ],
+      "source": "Fichier de test import",
+      "favorite": false,
+      "plannedDates": [],
+      "comments": []
+    },
+    {
+      "id": "test-r2",
+      "title": "Houmous maison",
+      "cookbookId": "test-cb1",
+      "prepTime": 10,
+      "cookTime": 0,
+      "servings": 4,
+      "weeklyViews": 5,
+      "tags": ["Apéritif", "Végétarien", "Sans photo"],
+      "ingredients": [
+        { "name": "Pois chiches cuits", "quantity": "400", "unit": "g" },
+        { "name": "Tahini", "quantity": "2", "unit": "c. à soupe" },
+        { "name": "Citron", "quantity": "1", "unit": "pièce" },
+        { "name": "Ail", "quantity": "1", "unit": "gousse" },
+        { "name": "Huile d'olive", "quantity": "3", "unit": "c. à soupe" }
+      ],
+      "steps": [
+        "Mixer les pois chiches avec le tahini, le jus de citron et l'ail.",
+        "Ajouter l'huile d'olive petit à petit jusqu'à consistance lisse.",
+        "Saler et servir avec un filet d'huile d'olive."
+      ],
+      "source": "Fichier de test import",
+      "favorite": false,
+      "plannedDates": [],
+      "comments": []
+    }
+  ]
+}
