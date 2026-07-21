@@ -5,6 +5,7 @@ client/.env
 client/node_modules
 
 sujet.txt
+todolist.txt
 .env
 
 nginx/certificate.crt
