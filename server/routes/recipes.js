@@ -3,6 +3,9 @@ import { pool } from '../db.js';
 import { requireAuth } from '../middleware/auth.js';
 import { requireRecipeAccess } from '../middleware/recipeAccess.js';
 import { getMemberRole } from '../utils/cookbooks.js';
+import { getUserById } from '../utils/users.js';
+import { suggestRecipes } from '../utils/suggestions.js';
+import { deleteUploadedFile } from '../utils/uploads.js';
 import {
   findRecipeIds,
   shapeRecipes,
@@ -54,19 +57,45 @@ router.post('/', async (req, res) => {
   res.status(201).json(recipe);
 });
 
+router.get('/suggestions', async (req, res) => {
+  const limit = req.query.limit ? Number(req.query.limit) : 8;
+  const user = await getUserById(req.userId);
+  const ids = await findRecipeIds(req.userId, {});
+  const recipes = await shapeRecipes(ids);
+  res.json(suggestRecipes(recipes, user.preferences, limit));
+});
+
 router.get('/:id', requireRecipeAccess('read'), async (req, res) => {
   const [recipe] = await shapeRecipes([req.params.id], { includeComments: true });
   res.json(recipe);
 });
 
 router.patch('/:id', requireRecipeAccess('write'), async (req, res) => {
-  await updateRecipe(req.params.id, req.body || {});
+  const patch = req.body || {};
+
+  if (patch.cookbookId) {
+    const role = await getMemberRole(patch.cookbookId, req.userId);
+    if (!['creator', 'editor'].includes(role)) {
+      return res.status(403).json({ error: "Vous n'avez pas les droits pour déplacer cette recette vers ce cookbook" });
+    }
+  }
+
+  const { rows } = await pool.query('SELECT image_url FROM recipes WHERE id = $1', [req.params.id]);
+  const oldImage = rows[0]?.image_url;
+
+  await updateRecipe(req.params.id, patch);
+  if (patch.image !== undefined && patch.image !== oldImage) {
+    await deleteUploadedFile(oldImage);
+  }
+
   const [recipe] = await shapeRecipes([req.params.id]);
   res.json(recipe);
 });
 
 router.delete('/:id', requireRecipeAccess('write'), async (req, res) => {
+  const { rows } = await pool.query('SELECT image_url FROM recipes WHERE id = $1', [req.params.id]);
   await deleteRecipe(req.params.id);
+  await deleteUploadedFile(rows[0]?.image_url);
   res.json({ success: true });
 });
 

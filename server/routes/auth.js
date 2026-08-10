@@ -1,17 +1,26 @@
 import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import rateLimit from 'express-rate-limit';
 import { pool } from '../db.js';
 import { requireAuth } from '../middleware/auth.js';
 import { getUserById } from '../utils/users.js';
 
 const router = Router();
 
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Trop de tentatives, réessayez plus tard' },
+});
+
 function signToken(userId) {
   return jwt.sign({ sub: userId }, process.env.JWT_SECRET, { expiresIn: '7d' });
 }
 
-router.post('/register', async (req, res) => {
+router.post('/register', authLimiter, async (req, res) => {
   const { name, email, password } = req.body || {};
   if (!name || !email || !password) {
     return res.status(400).json({ error: 'Nom, email et mot de passe requis' });
@@ -44,7 +53,7 @@ router.post('/register', async (req, res) => {
   res.status(201).json({ user, token: signToken(userId) });
 });
 
-router.post('/login', async (req, res) => {
+router.post('/login', authLimiter, async (req, res) => {
   const { email, password } = req.body || {};
   if (!email || !password) {
     return res.status(400).json({ error: 'Email et mot de passe requis' });

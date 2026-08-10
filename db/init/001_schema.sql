@@ -64,6 +64,7 @@ CREATE TABLE tags (
   id   UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL UNIQUE
 );
+CREATE INDEX idx_tags_name_trgm ON tags USING GIN (name gin_trgm_ops);
 
 CREATE TABLE recipes (
   id                UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -76,7 +77,6 @@ CREATE TABLE recipes (
   servings          SMALLINT NOT NULL DEFAULT 1 CHECK (servings > 0),
   source            TEXT NOT NULL DEFAULT '',
   favorite          BOOLEAN NOT NULL DEFAULT false,
-  search_vector     TSVECTOR,
   created_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at        TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -84,13 +84,12 @@ CREATE INDEX idx_recipes_owner ON recipes(owner_id);
 CREATE INDEX idx_recipes_cookbook ON recipes(cookbook_id);
 CREATE INDEX idx_recipes_favorite ON recipes(owner_id) WHERE favorite;
 CREATE INDEX idx_recipes_title_trgm ON recipes USING GIN (title gin_trgm_ops);
-CREATE INDEX idx_recipes_search_vector ON recipes USING GIN (search_vector);
 
 CREATE TABLE recipe_ingredients (
   id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   recipe_id     UUID NOT NULL REFERENCES recipes(id) ON DELETE CASCADE,
   ingredient_id UUID NOT NULL REFERENCES ingredients(id) ON DELETE RESTRICT,
-  quantity      NUMERIC,
+  quantity      TEXT,
   unit          TEXT NOT NULL DEFAULT '',
   position      SMALLINT NOT NULL DEFAULT 0
 );
@@ -111,6 +110,7 @@ CREATE TABLE recipe_steps (
   instruction TEXT NOT NULL,
   UNIQUE (recipe_id, position)
 );
+CREATE INDEX idx_recipe_steps_instruction_trgm ON recipe_steps USING GIN (instruction gin_trgm_ops);
 
 CREATE TABLE recipe_planned_dates (
   id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),

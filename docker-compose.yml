@@ -16,6 +16,7 @@ services:
     container_name: server
     environment:
      DATABASE_URL: postgres://supmeal_user:supmeal_pass@db:5432/supmeal
+     NODE_ENV: production
     ports:
       - "5000:5000"
     volumes:

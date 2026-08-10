@@ -3,6 +3,7 @@ import bcrypt from 'bcryptjs';
 import { pool } from '../db.js';
 import { requireAuth } from '../middleware/auth.js';
 import { getUserById } from '../utils/users.js';
+import { deleteUploadedFile } from '../utils/uploads.js';
 
 const router = Router();
 router.use(requireAuth);
@@ -15,8 +16,15 @@ router.patch('/me', async (req, res) => {
   if (avatar !== undefined) { values.push(avatar); fields.push(`avatar_url = $${values.length}`); }
 
   if (fields.length > 0) {
+    const { rows } = await pool.query('SELECT avatar_url FROM users WHERE id = $1', [req.userId]);
+    const oldAvatar = rows[0]?.avatar_url;
+
     values.push(req.userId);
     await pool.query(`UPDATE users SET ${fields.join(', ')} WHERE id = $${values.length}`, values);
+
+    if (avatar !== undefined && avatar !== oldAvatar) {
+      await deleteUploadedFile(oldAvatar);
+    }
   }
   res.json({ user: await getUserById(req.userId) });
 });
@@ -57,13 +65,14 @@ router.patch('/me/password', async (req, res) => {
 
 router.delete('/me', async (req, res) => {
   const { password } = req.body || {};
-  const { rows } = await pool.query('SELECT password_hash FROM users WHERE id = $1', [req.userId]);
+  const { rows } = await pool.query('SELECT password_hash, avatar_url FROM users WHERE id = $1', [req.userId]);
   const hash = rows[0]?.password_hash;
   if (!hash || !password || !(await bcrypt.compare(password, hash))) {
     return res.status(401).json({ error: 'Mot de passe incorrect' });
   }
 
   await pool.query('DELETE FROM users WHERE id = $1', [req.userId]);
+  await deleteUploadedFile(rows[0]?.avatar_url);
   res.json({ success: true });
 });
 
