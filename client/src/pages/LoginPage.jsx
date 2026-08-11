@@ -6,8 +6,8 @@ import PageBackground from '../components/PageBackground'
 const OAUTH_PROVIDERS = ['Google']
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('camille@supmeal.fr')
-  const [password, setPassword] = useState('password')
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const { login, loginWithOAuth } = useAuth()
@@ -32,6 +32,8 @@ export default function LoginPage() {
     try {
       await loginWithOAuth(provider)
       navigate('/')
+    } catch (err) {
+      setError(err.message)
     } finally {
       setSubmitting(false)
     }
@@ -45,10 +47,6 @@ export default function LoginPage() {
           <p className="mt-1 text-center text-sm text-stone-700 dark:text-stone-300">
             Connectez-vous pour accéder à vos recettes
           </p>
-          <p className="mt-3 rounded-md bg-black/5 px-3 py-2 text-center text-xs text-stone-600 dark:bg-white/10 dark:text-stone-300">
-            Compte de démo : camille@supmeal.fr / password
-          </p>
-
           <form onSubmit={handleSubmit} className="mt-6 space-y-4">
             <div>
               <label className="block text-sm font-medium text-stone-800 dark:text-stone-200">Email</label>
