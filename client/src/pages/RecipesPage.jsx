@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import * as api from '../api/mockApi'
+import * as api from '../api/recipesApi'
+import * as cookbooksApi from '../api/cookbooksApi'
 import { useAuth } from '../context/AuthContext'
 import RecipeCard from '../components/RecipeCard'
 import RecipeCardSkeleton from '../components/RecipeCardSkeleton'
@@ -26,7 +27,7 @@ export default function RecipesPage() {
   const [maxCookTime, setMaxCookTime] = useState('')
 
   useEffect(() => {
-    api.getCookbooks(user.id).then(setCookbooks)
+    cookbooksApi.getCookbooks(user.id).then(setCookbooks)
   }, [user.id])
 
   function loadRecipes() {

@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
-import * as api from '../api/mockApi'
+import * as cookbooksApi from '../api/cookbooksApi'
+import * as recipesApi from '../api/recipesApi'
+import { connectChatSocket } from '../api/socket'
 import { useAuth } from '../context/AuthContext'
 import RecipeCarousel from '../components/RecipeCarousel'
 import RecipeCardSkeleton from '../components/RecipeCardSkeleton'
@@ -29,17 +31,29 @@ export default function CookbookDetailPage() {
   const [inviteRole, setInviteRole] = useState('reader')
   const [inviteError, setInviteError] = useState('')
   const [memberError, setMemberError] = useState('')
+  const [socket, setSocket] = useState(null)
 
   function reload() {
     setCookbookError('')
-    api.getCookbookById(id).then(setCookbook).catch((err) => setCookbookError(err.message))
-    api.getMessages(id).then(setMessages)
+    cookbooksApi.getCookbookById(id).then(setCookbook).catch((err) => setCookbookError(err.message))
+    cookbooksApi.getMessages(id).then(setMessages)
   }
 
   useEffect(reload, [id])
 
+  useEffect(() => {
+    const s = connectChatSocket()
+    s.emit('cookbook:join', { cookbookId: id })
+    s.on('message:new', (msg) => setMessages((prev) => [...prev, msg]))
+    s.on('message:updated', (msg) => setMessages((prev) => prev.map((m) => (m.id === msg.id ? msg : m))))
+    s.on('message:deleted', ({ id: msgId }) => setMessages((prev) => prev.filter((m) => m.id !== msgId)))
+    s.on('error', (e) => setMessageError(e.error))
+    setSocket(s)
+    return () => s.disconnect()
+  }, [id])
+
   function reloadRecipes() {
-    api.getRecipes({ cookbookId: id, query: search || undefined }).then(setRecipes)
+    recipesApi.getRecipes({ cookbookId: id, query: search || undefined }).then(setRecipes)
   }
 
   useEffect(reloadRecipes, [id, search])
@@ -53,7 +67,7 @@ export default function CookbookDetailPage() {
     e.preventDefault()
     setInviteError('')
     try {
-      await api.inviteMember(id, inviteEmail.trim(), inviteRole)
+      await cookbooksApi.inviteMember(id, inviteEmail.trim(), inviteRole)
       setInviteEmail('')
       reload()
     } catch (err) {
@@ -64,7 +78,7 @@ export default function CookbookDetailPage() {
   async function handleRoleChange(memberId, role) {
     setMemberError('')
     try {
-      await api.updateMemberRole(id, memberId, role)
+      await cookbooksApi.updateMemberRole(id, memberId, role)
       reload()
     } catch (err) {
       setMemberError(err.message)
@@ -74,19 +88,18 @@ export default function CookbookDetailPage() {
   async function handleRemoveMember(memberId) {
     setMemberError('')
     try {
-      await api.removeMember(id, memberId)
+      await cookbooksApi.removeMember(id, memberId)
       reload()
     } catch (err) {
       setMemberError(err.message)
     }
   }
 
-  async function handleSendMessage(e) {
+  function handleSendMessage(e) {
     e.preventDefault()
-    if (!messageText.trim()) return
-    await api.sendMessage(id, user.id, messageText.trim())
+    if (!messageText.trim() || !socket) return
+    socket.emit('message:send', { cookbookId: id, text: messageText.trim() })
     setMessageText('')
-    api.getMessages(id).then(setMessages)
   }
 
   function handleStartEdit(message) {
@@ -100,29 +113,20 @@ export default function CookbookDetailPage() {
     setEditingText('')
   }
 
-  async function handleSaveEdit(e) {
+  function handleSaveEdit(e) {
     e.preventDefault()
-    if (!editingText.trim()) return
+    if (!editingText.trim() || !socket) return
     setMessageError('')
-    try {
-      await api.updateMessage(id, editingMessageId, user.id, editingText.trim())
-      setEditingMessageId(null)
-      setEditingText('')
-      api.getMessages(id).then(setMessages)
-    } catch (err) {
-      setMessageError(err.message)
-    }
+    socket.emit('message:edit', { cookbookId: id, messageId: editingMessageId, text: editingText.trim() })
+    setEditingMessageId(null)
+    setEditingText('')
   }
 
-  async function handleDeleteMessage(messageId) {
+  function handleDeleteMessage(messageId) {
     setMessageError('')
-    try {
-      await api.deleteMessage(id, messageId, user.id)
-      setConfirmDeleteMessageId(null)
-      api.getMessages(id).then(setMessages)
-    } catch (err) {
-      setMessageError(err.message)
-    }
+    if (!socket) return
+    socket.emit('message:delete', { cookbookId: id, messageId })
+    setConfirmDeleteMessageId(null)
   }
 
   if (cookbookError) {

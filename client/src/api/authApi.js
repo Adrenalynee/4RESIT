@@ -1,27 +1,4 @@
-const TOKEN_KEY = 'supmeal_token'
-
-function getToken() {
-  return localStorage.getItem(TOKEN_KEY)
-}
-
-function setToken(token) {
-  localStorage.setItem(TOKEN_KEY, token)
-}
-
-async function request(path, options = {}) {
-  const token = getToken()
-  const res = await fetch(`/api${path}`, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-    },
-    body: options.body ? JSON.stringify(options.body) : undefined,
-  })
-  const data = await res.json().catch(() => null)
-  if (!res.ok) throw new Error(data?.error || 'Une erreur est survenue')
-  return data
-}
+import { request, getToken, setToken, clearToken } from './http'
 
 export async function login(email, password) {
   const { user, token } = await request('/auth/login', { method: 'POST', body: { email, password } })
@@ -40,7 +17,7 @@ export async function register(name, email, password) {
 }
 
 export function logout() {
-  localStorage.removeItem(TOKEN_KEY)
+  clearToken()
 }
 
 export async function getCurrentUser() {
@@ -49,7 +26,7 @@ export async function getCurrentUser() {
     const { user } = await request('/auth/me')
     return user
   } catch {
-    logout()
+    clearToken()
     return null
   }
 }

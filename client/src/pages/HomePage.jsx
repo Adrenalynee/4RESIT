@@ -1,10 +1,9 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
-import * as api from '../api/mockApi'
+import * as api from '../api/recipesApi'
 import { useAuth } from '../context/AuthContext'
 import PageBackground from '../components/PageBackground'
 import RecipeCarousel from '../components/RecipeCarousel'
-import { suggestRecipes } from '../utils/suggestions'
 
 const PILLARS = [
   { title: 'Recettes', text: 'Cataloguez vos créations, avec ingrédients, étapes et notes personnelles.' },
@@ -18,9 +17,7 @@ export default function HomePage() {
 
   useEffect(() => {
     if (!user) return
-    api.getRecipes({ accessibleTo: user.id }).then((all) => {
-      setSuggestions(suggestRecipes(all, user.preferences))
-    })
+    api.getSuggestions().then(setSuggestions)
   }, [user])
 
   return (

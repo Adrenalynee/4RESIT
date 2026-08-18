@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import * as api from '../api/mockApi'
+import * as api from '../api/recipesApi'
+import * as cookbooksApi from '../api/cookbooksApi'
 import { useAuth } from '../context/AuthContext'
 import { canEditRecipes, getMyRole } from '../utils/permissions'
 import { isValidUrl } from '../utils/url'
@@ -22,7 +23,7 @@ export default function NewRecipeForm({ onCreated, defaultCookbookId }) {
   const [error, setError] = useState('')
 
   useEffect(() => {
-    api.getCookbooks(user.id).then((all) => {
+    cookbooksApi.getCookbooks(user.id).then((all) => {
       setCookbooks(all.filter((cb) => canEditRecipes(getMyRole(cb, user.id))))
     })
   }, [user.id])

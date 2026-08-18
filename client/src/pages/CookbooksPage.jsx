@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import HTMLFlipBook from 'react-pageflip'
-import * as api from '../api/mockApi'
+import * as api from '../api/cookbooksApi'
 import { useAuth } from '../context/AuthContext'
 import PageBackground from '../components/PageBackground'
 import { CookbookCoverPage, CookbookFlipPage } from '../components/CookbookFlipPage'

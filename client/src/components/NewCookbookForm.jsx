@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import * as api from '../api/mockApi'
+import * as api from '../api/cookbooksApi'
 import { useAuth } from '../context/AuthContext'
 
 export default function NewCookbookForm({ onCreated }) {

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import * as api from '../api/mockApi'
+import * as api from '../api/recipesApi'
+import * as cookbooksApi from '../api/cookbooksApi'
 import { useAuth } from '../context/AuthContext'
 import PageBackground from '../components/PageBackground'
 import Icon from '../components/Icon'
@@ -59,7 +60,7 @@ export default function RecipeDetailPage() {
       return
     }
     setRoleLoaded(false)
-    api.getCookbookById(cookbookId).then((cb) => {
+    cookbooksApi.getCookbookById(cookbookId).then((cb) => {
       setMyRole(getMyRole(cb, user.id))
       setRoleLoaded(true)
     })
