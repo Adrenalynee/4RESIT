@@ -2,8 +2,11 @@ import { Router } from 'express';
 import bcrypt from 'bcryptjs';
 import { pool } from '../db.js';
 import { requireAuth } from '../middleware/auth.js';
-import { getUserById } from '../utils/users.js';
+import { getUserById, replaceUserSet } from '../utils/users.js';
 import { deleteUploadedFile } from '../utils/uploads.js';
+import { ALLERGEN_VALUES } from '../utils/allergens.js';
+import { DIET_VALUES } from '../utils/diets.js';
+import { CUISINE_VALUES } from '../utils/cuisines.js';
 
 const router = Router();
 router.use(requireAuth);
@@ -30,18 +33,26 @@ router.patch('/me', async (req, res) => {
 });
 
 router.patch('/me/preferences', async (req, res) => {
-  const { diet = '', allergies = [], favoriteCuisine = '', defaultServings = 2 } = req.body || {};
+  const { diets = [], allergies = [], favoriteCuisines = [], defaultServings = 2 } = req.body || {};
 
-  await pool.query(
-    'UPDATE user_preferences SET diet = $1, favorite_cuisine = $2, default_servings = $3 WHERE user_id = $4',
-    [diet, favoriteCuisine, defaultServings, req.userId],
-  );
-
-  await pool.query('DELETE FROM user_allergies WHERE user_id = $1', [req.userId]);
-  if (allergies.length > 0) {
-    const values = allergies.map((_, i) => `($1, $${i + 2})`).join(', ');
-    await pool.query(`INSERT INTO user_allergies (user_id, allergy) VALUES ${values}`, [req.userId, ...allergies]);
+  const invalidAllergies = allergies.filter((a) => !ALLERGEN_VALUES.includes(a));
+  if (invalidAllergies.length > 0) {
+    return res.status(400).json({ error: `Allergène(s) invalide(s) : ${invalidAllergies.join(', ')}` });
   }
+  const invalidDiets = diets.filter((d) => !DIET_VALUES.includes(d));
+  if (invalidDiets.length > 0) {
+    return res.status(400).json({ error: `Régime(s) invalide(s) : ${invalidDiets.join(', ')}` });
+  }
+  const invalidCuisines = favoriteCuisines.filter((c) => !CUISINE_VALUES.includes(c));
+  if (invalidCuisines.length > 0) {
+    return res.status(400).json({ error: `Cuisine(s) invalide(s) : ${invalidCuisines.join(', ')}` });
+  }
+
+  await pool.query('UPDATE user_preferences SET default_servings = $1 WHERE user_id = $2', [defaultServings, req.userId]);
+
+  await replaceUserSet('user_allergies', 'allergy', req.userId, allergies);
+  await replaceUserSet('user_diets', 'diet', req.userId, diets);
+  await replaceUserSet('user_cuisines', 'cuisine', req.userId, favoriteCuisines);
 
   res.json({ user: await getUserById(req.userId) });
 });

@@ -23,8 +23,6 @@ CREATE INDEX idx_oauth_accounts_user ON oauth_accounts(user_id);
 
 CREATE TABLE user_preferences (
   user_id           UUID PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
-  diet              TEXT NOT NULL DEFAULT '',
-  favorite_cuisine  TEXT NOT NULL DEFAULT '',
   default_servings  SMALLINT NOT NULL DEFAULT 2 CHECK (default_servings > 0)
 );
 
@@ -32,6 +30,18 @@ CREATE TABLE user_allergies (
   user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   allergy TEXT NOT NULL,
   PRIMARY KEY (user_id, allergy)
+);
+
+CREATE TABLE user_diets (
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  diet    TEXT NOT NULL,
+  PRIMARY KEY (user_id, diet)
+);
+
+CREATE TABLE user_cuisines (
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  cuisine TEXT NOT NULL,
+  PRIMARY KEY (user_id, cuisine)
 );
 
 CREATE TYPE cookbook_role AS ENUM ('creator', 'editor', 'reader', 'commenter');

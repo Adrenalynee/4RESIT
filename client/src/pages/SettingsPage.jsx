@@ -1,6 +1,9 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import * as api from '../api/mockApi'
+import * as api from '../api/usersApi'
+import { getAllergens } from '../api/allergensApi'
+import { getDiets } from '../api/dietsApi'
+import { getCuisines } from '../api/cuisinesApi'
 import { useAuth } from '../context/AuthContext'
 import PageBackground from '../components/PageBackground'
 import ImportExportModal from '../components/modals/ImportExportModal'
@@ -12,9 +15,12 @@ export default function SettingsPage() {
   const navigate = useNavigate()
   const [name, setName] = useState(user.name || '')
   const [avatarPreview, setAvatarPreview] = useState(user.avatar || '')
-  const [diet, setDiet] = useState(user.preferences?.diet || '')
-  const [allergies, setAllergies] = useState((user.preferences?.allergies || []).join(', '))
-  const [favoriteCuisine, setFavoriteCuisine] = useState(user.preferences?.favoriteCuisine || '')
+  const [diets, setDiets] = useState(user.preferences?.diets || [])
+  const [dietOptions, setDietOptions] = useState([])
+  const [allergens, setAllergens] = useState([])
+  const [allergies, setAllergies] = useState(user.preferences?.allergies || [])
+  const [cuisineOptions, setCuisineOptions] = useState([])
+  const [favoriteCuisines, setFavoriteCuisines] = useState(user.preferences?.favoriteCuisines || [])
   const [defaultServings, setDefaultServings] = useState(user.preferences?.defaultServings || 2)
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
@@ -23,6 +29,24 @@ export default function SettingsPage() {
   const [showImportExport, setShowImportExport] = useState(false)
   const [showDeleteAccount, setShowDeleteAccount] = useState(false)
   const [cropSrc, setCropSrc] = useState(null)
+
+  useEffect(() => {
+    getAllergens().then(setAllergens)
+    getDiets().then(setDietOptions)
+    getCuisines().then(setCuisineOptions)
+  }, [])
+
+  function toggleAllergy(value) {
+    setAllergies((prev) => (prev.includes(value) ? prev.filter((a) => a !== value) : [...prev, value]))
+  }
+
+  function toggleDiet(value) {
+    setDiets((prev) => (prev.includes(value) ? prev.filter((d) => d !== value) : [...prev, value]))
+  }
+
+  function toggleCuisine(value) {
+    setFavoriteCuisines((prev) => (prev.includes(value) ? prev.filter((c) => c !== value) : [...prev, value]))
+  }
 
   function handleAvatarChange(e) {
     const file = e.target.files?.[0]
@@ -48,9 +72,9 @@ export default function SettingsPage() {
   async function handleSavePreferences(e) {
     e.preventDefault()
     const preferences = {
-      diet,
-      allergies: allergies.split(',').map((a) => a.trim()).filter(Boolean),
-      favoriteCuisine,
+      diets,
+      allergies,
+      favoriteCuisines,
       defaultServings: Number(defaultServings),
     }
     await api.updateUserPreferences(user.id, preferences)
@@ -186,15 +210,63 @@ export default function SettingsPage() {
               <form onSubmit={handleSavePreferences} className="mt-3 space-y-3">
                 <div>
                   <label className="relative block text-sm font-medium text-stone-900 dark:text-stone-100">Régime alimentaire</label>
-                  <input value={diet} onChange={(e) => setDiet(e.target.value)} className="mt-1 w-full rounded-md border border-white/40 bg-white/70 px-3 py-2 text-sm text-stone-900 placeholder:text-stone-500 focus:border-(--shimmer-2) focus:outline-none focus:ring-2 focus:ring-(--shimmer-2)/40 dark:border-white/15 dark:bg-black/40 dark:text-white dark:placeholder:text-white" />
+                  <div className="mt-1 flex flex-wrap gap-2">
+                    {dietOptions.map((option) => {
+                      const selected = diets.includes(option.value)
+                      return (
+                        <button
+                          key={option.value}
+                          type="button"
+                          onClick={() => toggleDiet(option.value)}
+                          className={`liquid-glass relative cursor-pointer rounded-full px-3 py-1.5 text-sm transition hover:scale-105 hover:brightness-125 active:scale-100 ${
+                            selected ? 'gold-glass text-stone-900 dark:text-white' : 'text-stone-900 dark:text-stone-100'
+                          }`}
+                        >
+                          <span className="relative">{option.label}</span>
+                        </button>
+                      )
+                    })}
+                  </div>
                 </div>
                 <div>
-                  <label className="relative block text-sm font-medium text-stone-900 dark:text-stone-100">Allergies (séparées par une virgule)</label>
-                  <input value={allergies} onChange={(e) => setAllergies(e.target.value)} className="mt-1 w-full rounded-md border border-white/40 bg-white/70 px-3 py-2 text-sm text-stone-900 placeholder:text-stone-500 focus:border-(--shimmer-2) focus:outline-none focus:ring-2 focus:ring-(--shimmer-2)/40 dark:border-white/15 dark:bg-black/40 dark:text-white dark:placeholder:text-white" />
+                  <label className="relative block text-sm font-medium text-stone-900 dark:text-stone-100">Allergies</label>
+                  <div className="mt-1 flex flex-wrap gap-2">
+                    {allergens.map((allergen) => {
+                      const selected = allergies.includes(allergen.value)
+                      return (
+                        <button
+                          key={allergen.value}
+                          type="button"
+                          onClick={() => toggleAllergy(allergen.value)}
+                          className={`liquid-glass relative cursor-pointer rounded-full px-3 py-1.5 text-sm transition hover:scale-105 hover:brightness-125 active:scale-100 ${
+                            selected ? 'gold-glass text-stone-900 dark:text-white' : 'text-stone-900 dark:text-stone-100'
+                          }`}
+                        >
+                          <span className="relative">{allergen.label}</span>
+                        </button>
+                      )
+                    })}
+                  </div>
                 </div>
                 <div>
                   <label className="relative block text-sm font-medium text-stone-900 dark:text-stone-100">Cuisine préférée</label>
-                  <input value={favoriteCuisine} onChange={(e) => setFavoriteCuisine(e.target.value)} className="mt-1 w-full rounded-md border border-white/40 bg-white/70 px-3 py-2 text-sm text-stone-900 placeholder:text-stone-500 focus:border-(--shimmer-2) focus:outline-none focus:ring-2 focus:ring-(--shimmer-2)/40 dark:border-white/15 dark:bg-black/40 dark:text-white dark:placeholder:text-white" />
+                  <div className="mt-1 flex flex-wrap gap-2">
+                    {cuisineOptions.map((option) => {
+                      const selected = favoriteCuisines.includes(option.value)
+                      return (
+                        <button
+                          key={option.value}
+                          type="button"
+                          onClick={() => toggleCuisine(option.value)}
+                          className={`liquid-glass relative cursor-pointer rounded-full px-3 py-1.5 text-sm transition hover:scale-105 hover:brightness-125 active:scale-100 ${
+                            selected ? 'gold-glass text-stone-900 dark:text-white' : 'text-stone-900 dark:text-stone-100'
+                          }`}
+                        >
+                          <span className="relative">{option.label}</span>
+                        </button>
+                      )
+                    })}
+                  </div>
                 </div>
                 <div>
                   <label className="relative block text-sm font-medium text-stone-900 dark:text-stone-100">Portions par défaut</label>

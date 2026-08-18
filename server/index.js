@@ -9,6 +9,9 @@ import recipesRouter from './routes/recipes.js';
 import { exportRouter, importRouter } from './routes/data.js';
 import uploadsRouter from './routes/uploads.js';
 import planningRouter from './routes/planning.js';
+import allergensRouter from './routes/allergens.js';
+import dietsRouter from './routes/diets.js';
+import cuisinesRouter from './routes/cuisines.js';
 import { attachChat } from './sockets/chat.js';
 
 const app = express();
@@ -26,6 +29,9 @@ app.use('/api/export', exportRouter);
 app.use('/api/import', importRouter);
 app.use('/api/uploads', uploadsRouter);
 app.use('/api/planning', planningRouter);
+app.use('/api/allergens', allergensRouter);
+app.use('/api/diets', dietsRouter);
+app.use('/api/cuisines', cuisinesRouter);
 
 app.use((err, req, res, next) => {
   console.error(err);
