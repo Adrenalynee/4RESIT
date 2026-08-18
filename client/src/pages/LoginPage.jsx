@@ -3,14 +3,12 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import PageBackground from '../components/PageBackground'
 
-const OAUTH_PROVIDERS = ['Google']
-
 export default function LoginPage() {
-  const [email, setEmail] = useState('')
+  const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
-  const { login, loginWithOAuth } = useAuth()
+  const { login } = useAuth()
   const navigate = useNavigate()
 
   async function handleSubmit(e) {
@@ -18,19 +16,7 @@ export default function LoginPage() {
     setError('')
     setSubmitting(true)
     try {
-      await login(email, password)
-      navigate('/')
-    } catch (err) {
-      setError(err.message)
-    } finally {
-      setSubmitting(false)
-    }
-  }
-
-  async function handleOAuth(provider) {
-    setSubmitting(true)
-    try {
-      await loginWithOAuth(provider)
+      await login(identifier, password)
       navigate('/')
     } catch (err) {
       setError(err.message)
@@ -49,12 +35,12 @@ export default function LoginPage() {
           </p>
           <form onSubmit={handleSubmit} className="mt-6 space-y-4">
             <div>
-              <label className="block text-sm font-medium text-stone-800 dark:text-stone-200">Email</label>
+              <label className="block text-sm font-medium text-stone-800 dark:text-stone-200">Email ou pseudo</label>
               <input
-                type="email"
+                type="text"
                 required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
                 className="mt-1 w-full rounded-md border border-white/40 bg-white/40 px-3 py-2 text-sm text-stone-900 placeholder:text-stone-500 focus:border-(--shimmer-2) focus:outline-none focus:ring-2 focus:ring-(--shimmer-2)/40 dark:bg-white/10 dark:text-stone-100 dark:placeholder:text-stone-400"
               />
             </div>
@@ -85,16 +71,12 @@ export default function LoginPage() {
           </div>
 
           <div className="space-y-2">
-            {OAUTH_PROVIDERS.map((provider) => (
-              <button
-                key={provider}
-                onClick={() => handleOAuth(provider)}
-                disabled={submitting}
-                className="w-full rounded-md border border-white/40 bg-white/20 py-2 text-sm font-medium text-stone-800 hover:bg-white/40 disabled:opacity-50 dark:text-stone-100 dark:hover:bg-white/20"
-              >
-                Continuer avec {provider}
-              </button>
-            ))}
+            <a
+              href="/api/auth/google"
+              className="block w-full rounded-md border border-white/40 bg-white/20 py-2 text-center text-sm font-medium text-stone-800 hover:bg-white/40 dark:text-stone-100 dark:hover:bg-white/20"
+            >
+              Continuer avec Google
+            </a>
           </div>
 
           <div className="mt-6 flex flex-wrap items-center justify-center gap-2 text-center text-sm text-stone-700 dark:text-stone-300">

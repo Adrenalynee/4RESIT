@@ -3,7 +3,7 @@ CREATE EXTENSION IF NOT EXISTS pg_trgm;
 
 CREATE TABLE users (
   id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  name          TEXT NOT NULL,
+  name          TEXT NOT NULL UNIQUE,
   email         TEXT NOT NULL UNIQUE,
   password_hash TEXT,
   avatar_url    TEXT,

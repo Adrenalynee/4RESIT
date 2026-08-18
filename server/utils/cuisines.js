@@ -8,6 +8,7 @@ export const CUISINES = [
   { value: 'asiatique', label: 'Asiatique' },
   { value: 'chinoise', label: 'Chinoise' },
   { value: 'japonaise', label: 'Japonaise' },
+  { value: 'coreenne', label: 'Coréenne' },
   { value: 'thailandaise', label: 'Thaïlandaise' },
   { value: 'mexicaine', label: 'Mexicaine' },
   { value: 'americaine', label: 'Américaine' },

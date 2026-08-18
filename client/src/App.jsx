@@ -6,6 +6,7 @@ import ProtectedRoute from './components/ProtectedRoute'
 import HomePage from './pages/HomePage'
 import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
+import OAuthCallbackPage from './pages/OAuthCallbackPage'
 import RecipesPage from './pages/RecipesPage'
 import RecipeDetailPage from './pages/RecipeDetailPage'
 import CookbooksPage from './pages/CookbooksPage'
@@ -13,7 +14,7 @@ import CookbookDetailPage from './pages/CookbookDetailPage'
 import PlanningPage from './pages/PlanningPage'
 import SettingsPage from './pages/SettingsPage'
 
-const AUTH_ROUTES = ['/login', '/register']
+const AUTH_ROUTES = ['/login', '/register', '/oauth/callback']
 
 export default function App() {
   const location = useLocation()
@@ -28,6 +29,7 @@ export default function App() {
         <Route path="/" element={<HomePage />} />
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
+        <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
         <Route
           path="/recipes"
           element={

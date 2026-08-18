@@ -14,14 +14,14 @@ export function AuthProvider({ children }) {
     })
   }, [])
 
-  async function login(email, password) {
-    const loggedIn = await api.login(email, password)
+  async function login(identifier, password) {
+    const loggedIn = await api.login(identifier, password)
     setUser(loggedIn)
     return loggedIn
   }
 
-  async function loginWithOAuth(provider) {
-    const loggedIn = await api.loginWithOAuth(provider)
+  async function loginWithToken(token) {
+    const loggedIn = await api.completeOAuthLogin(token)
     setUser(loggedIn)
     return loggedIn
   }
@@ -43,7 +43,7 @@ export function AuthProvider({ children }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, loginWithOAuth, register, logout, refreshUser }}>
+    <AuthContext.Provider value={{ user, loading, login, loginWithToken, register, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   )

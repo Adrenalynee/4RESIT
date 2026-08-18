@@ -13,6 +13,7 @@ import allergensRouter from './routes/allergens.js';
 import dietsRouter from './routes/diets.js';
 import cuisinesRouter from './routes/cuisines.js';
 import { attachChat } from './sockets/chat.js';
+import passport from './config/passport.js';
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -20,6 +21,7 @@ const port = process.env.PORT || 5000;
 app.set('trust proxy', 1); // derrière nginx : lit le vrai client IP via X-Forwarded-For (rate limiting)
 
 app.use(express.json({ limit: '10mb' }));
+app.use(passport.initialize());
 app.use('/uploads', express.static('uploads', { setHeaders: (res) => res.set('X-Content-Type-Options', 'nosniff') }));
 app.use('/api/auth', authRouter);
 app.use('/api/cookbooks', cookbooksRouter);

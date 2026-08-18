@@ -36,16 +36,32 @@ export default function SettingsPage() {
     getCuisines().then(setCuisineOptions)
   }, [])
 
+  async function saveProfile(patch) {
+    await api.updateUserProfile(user.id, patch)
+    refreshUser(patch)
+  }
+
+  async function savePreferences(preferences) {
+    await api.updateUserPreferences(user.id, preferences)
+    refreshUser({ preferences })
+  }
+
   function toggleAllergy(value) {
-    setAllergies((prev) => (prev.includes(value) ? prev.filter((a) => a !== value) : [...prev, value]))
+    const updated = allergies.includes(value) ? allergies.filter((a) => a !== value) : [...allergies, value]
+    setAllergies(updated)
+    savePreferences({ diets, allergies: updated, favoriteCuisines, defaultServings: Number(defaultServings) })
   }
 
   function toggleDiet(value) {
-    setDiets((prev) => (prev.includes(value) ? prev.filter((d) => d !== value) : [...prev, value]))
+    const updated = diets.includes(value) ? diets.filter((d) => d !== value) : [...diets, value]
+    setDiets(updated)
+    savePreferences({ diets: updated, allergies, favoriteCuisines, defaultServings: Number(defaultServings) })
   }
 
   function toggleCuisine(value) {
-    setFavoriteCuisines((prev) => (prev.includes(value) ? prev.filter((c) => c !== value) : [...prev, value]))
+    const updated = favoriteCuisines.includes(value) ? favoriteCuisines.filter((c) => c !== value) : [...favoriteCuisines, value]
+    setFavoriteCuisines(updated)
+    savePreferences({ diets, allergies, favoriteCuisines: updated, defaultServings: Number(defaultServings) })
   }
 
   function handleAvatarChange(e) {
@@ -60,25 +76,7 @@ export default function SettingsPage() {
   function handleCropConfirm(croppedDataUrl) {
     setAvatarPreview(croppedDataUrl)
     setCropSrc(null)
-  }
-
-  async function handleSaveProfile(e) {
-    e.preventDefault()
-    const profile = { name: name.trim(), avatar: avatarPreview }
-    await api.updateUserProfile(user.id, profile)
-    refreshUser(profile)
-  }
-
-  async function handleSavePreferences(e) {
-    e.preventDefault()
-    const preferences = {
-      diets,
-      allergies,
-      favoriteCuisines,
-      defaultServings: Number(defaultServings),
-    }
-    await api.updateUserPreferences(user.id, preferences)
-    refreshUser({ preferences })
+    saveProfile({ avatar: croppedDataUrl })
   }
 
   async function handleChangePassword(e) {
@@ -114,7 +112,7 @@ export default function SettingsPage() {
           <div className="flex flex-col gap-6">
             <section className="liquid-glass liquid-glass-opaque-soft rounded-xl p-4">
               <h2 className="relative font-semibold text-stone-900 dark:text-stone-100">Profil</h2>
-              <form onSubmit={handleSaveProfile} className="mt-3 space-y-3">
+              <div className="mt-3 space-y-3">
                 <div className="flex items-center gap-3">
                   <img src={avatarPreview} alt={name} className="relative h-16 w-16 rounded-full object-cover" />
                   <div>
@@ -135,58 +133,63 @@ export default function SettingsPage() {
                 </div>
                 <div>
                   <label className="relative block text-sm font-medium text-stone-900 dark:text-stone-100">Pseudo</label>
-                  <input value={name} onChange={(e) => setName(e.target.value)} className="mt-1 w-full rounded-md border border-white/40 bg-white/70 px-3 py-2 text-sm text-stone-900 placeholder:text-stone-500 focus:border-(--shimmer-2) focus:outline-none focus:ring-2 focus:ring-(--shimmer-2)/40 dark:border-white/15 dark:bg-black/40 dark:text-white dark:placeholder:text-white" />
+                  <input
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    onBlur={() => name.trim() && name.trim() !== user.name && saveProfile({ name: name.trim() })}
+                    onKeyDown={(e) => e.key === 'Enter' && e.target.blur()}
+                    className="mt-1 w-full rounded-md border border-white/40 bg-white/70 px-3 py-2 text-sm text-stone-900 placeholder:text-stone-500 focus:border-(--shimmer-2) focus:outline-none focus:ring-2 focus:ring-(--shimmer-2)/40 dark:border-white/15 dark:bg-black/40 dark:text-white dark:placeholder:text-white"
+                  />
                 </div>
                 <div>
                   <label className="relative block text-sm font-medium text-stone-900 dark:text-stone-100">Email</label>
                   <input value={user.email} disabled className="mt-1 w-full cursor-not-allowed rounded-md border border-white/40 bg-white/40 px-3 py-2 text-sm text-stone-500 dark:border-white/15 dark:bg-black/20 dark:text-stone-400" />
                 </div>
-                <button
-                  type="submit"
-                  className="liquid-glass gold-glass rounded-full px-4 py-2 shadow-[0_4px_16px_rgba(0,0,0,0.25)] transition hover:scale-105 hover:brightness-95 active:scale-100"
-                >
-                  <span className="relative text-sm font-semibold text-stone-900 dark:text-white">Enregistrer</span>
-                </button>
-              </form>
+              </div>
             </section>
 
             <section className="liquid-glass liquid-glass-opaque-soft rounded-xl p-4">
               <h2 className="relative font-semibold text-stone-900 dark:text-stone-100">Sécurité</h2>
-              <form onSubmit={handleChangePassword} className="mt-3 space-y-2">
-                <div className="flex flex-wrap gap-2">
-                  <input
-                    type="password"
-                    placeholder="Mot de passe actuel"
-                    value={currentPassword}
-                    onChange={(e) => setCurrentPassword(e.target.value)}
-                    className="min-w-40 flex-1 rounded-md border border-white/40 bg-white/70 px-3 py-2 text-sm text-stone-900 placeholder:text-stone-500 focus:border-(--shimmer-2) focus:outline-none focus:ring-2 focus:ring-(--shimmer-2)/40 dark:border-white/15 dark:bg-black/40 dark:text-white dark:placeholder:text-white"
-                  />
-                  <input
-                    type="password"
-                    placeholder="Nouveau mot de passe"
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    className="min-w-40 flex-1 rounded-md border border-white/40 bg-white/70 px-3 py-2 text-sm text-stone-900 placeholder:text-stone-500 focus:border-(--shimmer-2) focus:outline-none focus:ring-2 focus:ring-(--shimmer-2)/40 dark:border-white/15 dark:bg-black/40 dark:text-white dark:placeholder:text-white"
-                  />
-                  <input
-                    type="password"
-                    placeholder="Confirmer le mot de passe"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="min-w-40 flex-1 rounded-md border border-white/40 bg-white/70 px-3 py-2 text-sm text-stone-900 placeholder:text-stone-500 focus:border-(--shimmer-2) focus:outline-none focus:ring-2 focus:ring-(--shimmer-2)/40 dark:border-white/15 dark:bg-black/40 dark:text-white dark:placeholder:text-white"
-                  />
-                  <button
-                    type="submit"
-                    className="liquid-glass gold-glass relative rounded-full px-4 py-2 text-sm font-semibold transition hover:scale-105 hover:brightness-95 active:scale-100"
-                  >
-                    <span className="relative text-stone-900 dark:text-white">Modifier</span>
-                  </button>
-                </div>
-                {passwordError && <p className="text-sm text-red-500">{passwordError}</p>}
-              </form>
-              <p className="relative mt-3 text-sm text-stone-700 dark:text-stone-300">
-                OAuth2 (Google, Microsoft, GitHub) : géré depuis l'écran de connexion pour cette maquette frontend.
-              </p>
+              {user.hasPassword ? (
+                <form onSubmit={handleChangePassword} className="mt-3 space-y-2">
+                  <div className="flex flex-wrap gap-2">
+                    <input
+                      type="password"
+                      placeholder="Mot de passe actuel"
+                      value={currentPassword}
+                      onChange={(e) => setCurrentPassword(e.target.value)}
+                      className="min-w-40 flex-1 rounded-md border border-white/40 bg-white/70 px-3 py-2 text-sm text-stone-900 placeholder:text-stone-500 focus:border-(--shimmer-2) focus:outline-none focus:ring-2 focus:ring-(--shimmer-2)/40 dark:border-white/15 dark:bg-black/40 dark:text-white dark:placeholder:text-white"
+                    />
+                    <input
+                      type="password"
+                      placeholder="Nouveau mot de passe"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      className="min-w-40 flex-1 rounded-md border border-white/40 bg-white/70 px-3 py-2 text-sm text-stone-900 placeholder:text-stone-500 focus:border-(--shimmer-2) focus:outline-none focus:ring-2 focus:ring-(--shimmer-2)/40 dark:border-white/15 dark:bg-black/40 dark:text-white dark:placeholder:text-white"
+                    />
+                    <input
+                      type="password"
+                      placeholder="Confirmer le mot de passe"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      className="min-w-40 flex-1 rounded-md border border-white/40 bg-white/70 px-3 py-2 text-sm text-stone-900 placeholder:text-stone-500 focus:border-(--shimmer-2) focus:outline-none focus:ring-2 focus:ring-(--shimmer-2)/40 dark:border-white/15 dark:bg-black/40 dark:text-white dark:placeholder:text-white"
+                    />
+                    <button
+                      type="submit"
+                      className="liquid-glass gold-glass relative rounded-full px-4 py-2 text-sm font-semibold transition hover:scale-105 hover:brightness-95 active:scale-100"
+                    >
+                      <span className="relative text-stone-900 dark:text-white">Modifier</span>
+                    </button>
+                  </div>
+                  {passwordError && <p className="text-sm text-red-500">{passwordError}</p>}
+                </form>
+              ) : (
+                <p className="relative mt-3 text-sm text-stone-700 dark:text-stone-300">
+                  {user.oauthProviders.includes('google')
+                    ? 'Compte créé avec Google : la connexion se fait via Google, aucun mot de passe à gérer ici.'
+                    : "Ce compte n'a pas de mot de passe local (connexion via un fournisseur externe)."}
+                </p>
+              )}
             </section>
 
             <section className="liquid-glass liquid-glass-opaque-soft flex flex-1 flex-col rounded-xl p-4">
@@ -207,7 +210,7 @@ export default function SettingsPage() {
           <div className="flex flex-col gap-6">
             <section className="liquid-glass liquid-glass-opaque-soft rounded-xl p-4">
               <h2 className="relative font-semibold text-stone-900 dark:text-stone-100">Préférences culinaires</h2>
-              <form onSubmit={handleSavePreferences} className="mt-3 space-y-3">
+              <div className="mt-3 space-y-3">
                 <div>
                   <label className="relative block text-sm font-medium text-stone-900 dark:text-stone-100">Régime alimentaire</label>
                   <div className="mt-1 flex flex-wrap gap-2">
@@ -270,15 +273,17 @@ export default function SettingsPage() {
                 </div>
                 <div>
                   <label className="relative block text-sm font-medium text-stone-900 dark:text-stone-100">Portions par défaut</label>
-                  <input type="number" min="1" value={defaultServings} onChange={(e) => setDefaultServings(e.target.value)} className="mt-1 w-full rounded-md border border-white/40 bg-white/70 px-3 py-2 text-sm text-stone-900 placeholder:text-stone-500 focus:border-(--shimmer-2) focus:outline-none focus:ring-2 focus:ring-(--shimmer-2)/40 dark:border-white/15 dark:bg-black/40 dark:text-white dark:placeholder:text-white" />
+                  <input
+                    type="number"
+                    min="1"
+                    value={defaultServings}
+                    onChange={(e) => setDefaultServings(e.target.value)}
+                    onBlur={() => savePreferences({ diets, allergies, favoriteCuisines, defaultServings: Number(defaultServings) })}
+                    onKeyDown={(e) => e.key === 'Enter' && e.target.blur()}
+                    className="mt-1 w-full rounded-md border border-white/40 bg-white/70 px-3 py-2 text-sm text-stone-900 placeholder:text-stone-500 focus:border-(--shimmer-2) focus:outline-none focus:ring-2 focus:ring-(--shimmer-2)/40 dark:border-white/15 dark:bg-black/40 dark:text-white dark:placeholder:text-white"
+                  />
                 </div>
-                <button
-                  type="submit"
-                  className="liquid-glass gold-glass rounded-full px-4 py-2 shadow-[0_4px_16px_rgba(0,0,0,0.25)] transition hover:scale-105 hover:brightness-95 active:scale-100"
-                >
-                  <span className="relative text-sm font-semibold text-stone-900 dark:text-white">Enregistrer</span>
-                </button>
-              </form>
+              </div>
             </section>
 
             <section className="liquid-glass liquid-glass-opaque-soft flex flex-1 flex-col rounded-xl p-4">
