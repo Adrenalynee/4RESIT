@@ -6,6 +6,11 @@ import { getMemberRole } from '../utils/cookbooks.js';
 import { getUserById } from '../utils/users.js';
 import { suggestRecipes } from '../utils/suggestions.js';
 import { deleteUploadedFile } from '../utils/uploads.js';
+import { scrapeRecipeFromUrl } from '../utils/recipeScraper.js';
+import { MEAL_TYPE_VALUES } from '../utils/mealTypes.js';
+import { CUISINE_VALUES } from '../utils/cuisines.js';
+import { DIET_VALUES } from '../utils/diets.js';
+import { DIFFICULTY_VALUES } from '../utils/difficulty.js';
 import {
   findRecipeIds,
   shapeRecipes,
@@ -16,6 +21,18 @@ import {
   addPlannedDate,
   removePlannedDate,
 } from '../utils/recipes.js';
+
+const TAG_VALUES = [...MEAL_TYPE_VALUES, ...CUISINE_VALUES, ...DIET_VALUES];
+
+function validateRecipeCategories(body) {
+  if (body.tags && body.tags.some((t) => !TAG_VALUES.includes(t))) {
+    return 'Une ou plusieurs catégories ne sont pas valides';
+  }
+  if (body.difficulty && !DIFFICULTY_VALUES.includes(body.difficulty)) {
+    return "La difficulté n'est pas valide";
+  }
+  return null;
+}
 
 const router = Router();
 router.use(requireAuth);
@@ -45,6 +62,9 @@ router.post('/', async (req, res) => {
   const { title, cookbookId } = req.body || {};
   if (!title || !title.trim()) return res.status(400).json({ error: 'Le titre est requis' });
 
+  const categoryError = validateRecipeCategories(req.body || {});
+  if (categoryError) return res.status(400).json({ error: categoryError });
+
   if (cookbookId) {
     const role = await getMemberRole(cookbookId, req.userId);
     if (!['creator', 'editor'].includes(role)) {
@@ -55,6 +75,17 @@ router.post('/', async (req, res) => {
   const recipeId = await createRecipe(req.userId, req.body);
   const [recipe] = await shapeRecipes([recipeId]);
   res.status(201).json(recipe);
+});
+
+router.post('/import-url', async (req, res) => {
+  const { url } = req.body || {};
+  if (!url) return res.status(400).json({ error: 'URL requise' });
+  try {
+    const draft = await scrapeRecipeFromUrl(url);
+    res.json(draft);
+  } catch (err) {
+    res.status(err.status || 500).json({ error: err.message || 'Erreur lors de la récupération de la recette' });
+  }
 });
 
 router.get('/suggestions', async (req, res) => {
@@ -72,6 +103,9 @@ router.get('/:id', requireRecipeAccess('read'), async (req, res) => {
 
 router.patch('/:id', requireRecipeAccess('write'), async (req, res) => {
   const patch = req.body || {};
+
+  const categoryError = validateRecipeCategories(patch);
+  if (categoryError) return res.status(400).json({ error: categoryError });
 
   if (patch.cookbookId) {
     const role = await getMemberRole(patch.cookbookId, req.userId);

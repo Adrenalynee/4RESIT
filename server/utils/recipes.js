@@ -117,6 +117,7 @@ export async function shapeRecipes(ids, { includeComments = false } = {}) {
         servings: r.servings,
         source: r.source,
         favorite: r.favorite,
+        difficulty: r.difficulty,
         tags: [],
         ingredients: [],
         steps: [],
@@ -195,8 +196,8 @@ async function replaceRecipeChildren(recipeId, { ingredients, tags, steps }) {
 
 export async function createRecipe(ownerId, payload) {
   const { rows } = await pool.query(
-    `INSERT INTO recipes (title, owner_id, cookbook_id, image_url, prep_time_minutes, cook_time_minutes, servings, source)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
+    `INSERT INTO recipes (title, owner_id, cookbook_id, image_url, prep_time_minutes, cook_time_minutes, servings, source, difficulty)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id`,
     [
       payload.title,
       ownerId,
@@ -206,6 +207,7 @@ export async function createRecipe(ownerId, payload) {
       payload.cookTime || 0,
       payload.servings || 1,
       payload.source || '',
+      payload.difficulty || null,
     ],
   );
   const recipeId = rows[0].id;
@@ -226,6 +228,7 @@ export async function updateRecipe(recipeId, patch) {
     cookTime: 'cook_time_minutes',
     servings: 'servings',
     source: 'source',
+    difficulty: 'difficulty',
   };
   const fields = [];
   const values = [];

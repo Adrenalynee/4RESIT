@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useNavigate, useParams } from 'react-router-dom'
 import * as cookbooksApi from '../api/cookbooksApi'
 import * as recipesApi from '../api/recipesApi'
 import { connectChatSocket } from '../api/socket'
@@ -10,16 +10,23 @@ import Skeleton from '../components/Skeleton'
 import ErrorState from '../components/ErrorState'
 import PageBackground from '../components/PageBackground'
 import NewRecipeModal from '../components/modals/NewRecipeModal'
+import ConfirmDeleteCookbookModal from '../components/modals/ConfirmDeleteCookbookModal'
 import { ROLE_LABELS, canEditRecipes, canManageMembers, getMyRole } from '../utils/permissions'
 
 export default function CookbookDetailPage() {
   const { cookbookId: id } = useParams()
   const { user } = useAuth()
+  const navigate = useNavigate()
   const [cookbook, setCookbook] = useState(null)
   const [cookbookError, setCookbookError] = useState('')
   const [recipes, setRecipes] = useState([])
   const [search, setSearch] = useState('')
   const [showNewRecipe, setShowNewRecipe] = useState(false)
+  const [editingCookbook, setEditingCookbook] = useState(false)
+  const [editName, setEditName] = useState('')
+  const [editDescription, setEditDescription] = useState('')
+  const [renameError, setRenameError] = useState('')
+  const [showDeleteCookbook, setShowDeleteCookbook] = useState(false)
   const [activeRecipeId, setActiveRecipeId] = useState(() => sessionStorage.getItem(`cookbook-${id}-active-recipe`))
   const [messages, setMessages] = useState([])
   const [messageText, setMessageText] = useState('')
@@ -27,7 +34,7 @@ export default function CookbookDetailPage() {
   const [editingText, setEditingText] = useState('')
   const [confirmDeleteMessageId, setConfirmDeleteMessageId] = useState(null)
   const [messageError, setMessageError] = useState('')
-  const [inviteEmail, setInviteEmail] = useState('')
+  const [inviteIdentifier, setInviteIdentifier] = useState('')
   const [inviteRole, setInviteRole] = useState('reader')
   const [inviteError, setInviteError] = useState('')
   const [memberError, setMemberError] = useState('')
@@ -63,12 +70,36 @@ export default function CookbookDetailPage() {
     if (recipeId) sessionStorage.setItem(`cookbook-${id}-active-recipe`, recipeId)
   }
 
+  function handleStartRename() {
+    setRenameError('')
+    setEditName(cookbook.name)
+    setEditDescription(cookbook.description)
+    setEditingCookbook(true)
+  }
+
+  async function handleSaveRename(e) {
+    e.preventDefault()
+    setRenameError('')
+    try {
+      await cookbooksApi.updateCookbook(id, { name: editName.trim(), description: editDescription })
+      setEditingCookbook(false)
+      reload()
+    } catch (err) {
+      setRenameError(err.message)
+    }
+  }
+
+  async function handleDeleteCookbook() {
+    await cookbooksApi.deleteCookbook(id)
+    navigate('/cookbooks')
+  }
+
   async function handleInvite(e) {
     e.preventDefault()
     setInviteError('')
     try {
-      await cookbooksApi.inviteMember(id, inviteEmail.trim(), inviteRole)
-      setInviteEmail('')
+      await cookbooksApi.inviteMember(id, inviteIdentifier.trim(), inviteRole)
+      setInviteIdentifier('')
       reload()
     } catch (err) {
       setInviteError(err.message)
@@ -178,8 +209,60 @@ export default function CookbookDetailPage() {
             <span className="relative text-stone-900 dark:text-white">Retour aux cookbooks</span>
           </Link>
         </div>
-        <h1 className="mt-2 text-2xl font-bold text-white">{cookbook.name}</h1>
-        <p className="mt-1 text-sm text-white/80">{cookbook.description}</p>
+        {editingCookbook ? (
+          <form onSubmit={handleSaveRename} className="liquid-glass mt-2 max-w-lg space-y-2 rounded-xl p-4">
+            <input
+              value={editName}
+              onChange={(e) => setEditName(e.target.value)}
+              className="w-full rounded-md border border-white/40 bg-white/70 px-3 py-2 text-sm text-stone-900 focus:border-(--shimmer-2) focus:outline-none focus:ring-2 focus:ring-(--shimmer-2)/40 dark:border-white/15 dark:bg-black/40 dark:text-white"
+            />
+            <textarea
+              value={editDescription}
+              onChange={(e) => setEditDescription(e.target.value)}
+              rows={2}
+              className="w-full rounded-md border border-white/40 bg-white/70 px-3 py-2 text-sm text-stone-900 focus:border-(--shimmer-2) focus:outline-none focus:ring-2 focus:ring-(--shimmer-2)/40 dark:border-white/15 dark:bg-black/40 dark:text-white"
+            />
+            {renameError && <p className="text-sm text-red-600 dark:text-red-400">{renameError}</p>}
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setEditingCookbook(false)}
+                className="liquid-glass relative rounded-full px-4 py-1.5 text-sm font-semibold text-stone-900 transition hover:scale-105 hover:brightness-125 active:scale-100 dark:text-stone-100"
+              >
+                <span className="relative">Annuler</span>
+              </button>
+              <button
+                type="submit"
+                className="liquid-glass gold-glass relative rounded-full px-4 py-1.5 text-sm font-semibold transition hover:scale-105 hover:brightness-95 active:scale-100"
+              >
+                <span className="relative text-stone-900 dark:text-white">Enregistrer</span>
+              </button>
+            </div>
+          </form>
+        ) : (
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            <h1 className="text-2xl font-bold text-white">{cookbook.name}</h1>
+            {isCreator && (
+              <button
+                type="button"
+                onClick={handleStartRename}
+                className="liquid-glass relative rounded-full px-3 py-1 text-xs font-semibold text-stone-900 transition hover:scale-105 hover:brightness-125 active:scale-100 dark:text-stone-100"
+              >
+                <span className="relative">Modifier</span>
+              </button>
+            )}
+            {isCreator && (
+              <button
+                type="button"
+                onClick={() => setShowDeleteCookbook(true)}
+                className="liquid-glass red-glass relative rounded-full px-3 py-1 text-xs font-semibold text-red-700 transition hover:scale-105 hover:brightness-125 active:scale-100 dark:text-red-100"
+              >
+                <span className="relative">Supprimer</span>
+              </button>
+            )}
+          </div>
+        )}
+        {!editingCookbook && <p className="mt-1 text-sm text-white/80">{cookbook.description}</p>}
 
         <div className="mt-4 flex flex-wrap gap-2">
           {cookbook.members.map((m) => (
@@ -247,10 +330,10 @@ export default function CookbookDetailPage() {
                 <h2 className="font-semibold text-stone-900 dark:text-white">Inviter un membre</h2>
                 <form onSubmit={handleInvite} className="mt-2 space-y-2">
                   <input
-                    type="email"
-                    placeholder="email@exemple.com"
-                    value={inviteEmail}
-                    onChange={(e) => setInviteEmail(e.target.value)}
+                    type="text"
+                    placeholder="Email ou pseudo"
+                    value={inviteIdentifier}
+                    onChange={(e) => setInviteIdentifier(e.target.value)}
                     className="w-full rounded-md border border-white/40 bg-white/70 px-3 py-2 text-sm text-stone-900 placeholder:text-stone-500 focus:border-(--shimmer-2) focus:outline-none focus:ring-2 focus:ring-(--shimmer-2)/40 dark:border-white/15 dark:bg-black/40 dark:text-white dark:placeholder:text-white"
                   />
                   <select
@@ -407,6 +490,14 @@ export default function CookbookDetailPage() {
             setShowNewRecipe(false)
             reloadRecipes()
           }}
+        />
+      )}
+
+      {showDeleteCookbook && (
+        <ConfirmDeleteCookbookModal
+          cookbookName={cookbook.name}
+          onClose={() => setShowDeleteCookbook(false)}
+          onConfirm={handleDeleteCookbook}
         />
       )}
     </PageBackground>

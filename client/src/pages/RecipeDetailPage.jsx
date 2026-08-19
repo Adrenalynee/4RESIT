@@ -3,6 +3,7 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import * as api from '../api/recipesApi'
 import * as cookbooksApi from '../api/cookbooksApi'
 import { useAuth } from '../context/AuthContext'
+import { useRecipeTaxonomy } from '../context/RecipeTaxonomyContext'
 import PageBackground from '../components/PageBackground'
 import Icon from '../components/Icon'
 import { toISODate } from '../utils/date'
@@ -14,6 +15,7 @@ import cookingIconUrl from '../assets/cooking.svg'
 import hourglassIcon from '../assets/hourglass.svg?raw'
 import trashIcon from '../assets/trash.svg?raw'
 import ConfirmDeleteModal from '../components/modals/ConfirmDeleteModal'
+import EditRecipeModal from '../components/modals/EditRecipeModal'
 import Skeleton from '../components/Skeleton'
 import ErrorState from '../components/ErrorState'
 import { canComment, canEditRecipes, getMyRole } from '../utils/permissions'
@@ -24,6 +26,7 @@ const todayIso = toISODate(new Date())
 export default function RecipeDetailPage() {
   const { id, cookbookId } = useParams()
   const { user } = useAuth()
+  const { getLabel } = useRecipeTaxonomy()
   const navigate = useNavigate()
   const [recipe, setRecipe] = useState(null)
   const [recipeError, setRecipeError] = useState('')
@@ -36,6 +39,7 @@ export default function RecipeDetailPage() {
   const [commentError, setCommentError] = useState('')
   const [planDate, setPlanDate] = useState('')
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
+  const [showEditRecipe, setShowEditRecipe] = useState(false)
 
   function reload() {
     setRecipeError('')
@@ -228,6 +232,14 @@ export default function RecipeDetailPage() {
                   </button>
                   {canEdit && (
                     <button
+                      onClick={() => setShowEditRecipe(true)}
+                      className="liquid-glass relative cursor-pointer rounded-full px-3 py-1.5 text-sm font-semibold text-stone-900 transition hover:scale-105 hover:brightness-125 active:scale-100 dark:text-stone-100"
+                    >
+                      <span className="relative">Modifier</span>
+                    </button>
+                  )}
+                  {canEdit && (
+                    <button
                       onClick={() => setShowDeleteConfirm(true)}
                       aria-label="Supprimer la recette"
                       className="liquid-glass relative flex h-9 w-9 cursor-pointer items-center justify-center rounded-full text-black transition hover:scale-105 hover:brightness-125 active:scale-100"
@@ -258,12 +270,13 @@ export default function RecipeDetailPage() {
                 <span className="flex items-center gap-1.5"><Icon svg={clockIcon} /> {recipe.prepTime} min prépa</span>
                 <span className="flex items-center gap-1.5"><Icon svg={cookingIcon} /> {recipe.cookTime} min cuisson</span>
                 <span className="flex items-center gap-1.5"><Icon svg={hourglassIcon} /> {recipe.prepTime + recipe.cookTime} min total</span>
+                {recipe.difficulty && <span>{getLabel(recipe.difficulty)}</span>}
               </div>
 
               <div className="mt-3 flex flex-wrap gap-1">
                 {recipe.tags.map((tag) => (
                   <span key={tag} className="liquid-glass gold-glass gold-glass-light relative rounded-full px-2 py-0.5 text-xs">
-                    <span className="relative text-stone-900 dark:text-stone-100">{tag}</span>
+                    <span className="relative text-stone-900 dark:text-stone-100">{getLabel(tag)}</span>
                   </span>
                 ))}
               </div>
@@ -458,6 +471,17 @@ export default function RecipeDetailPage() {
           recipeName={recipe.title}
           onClose={() => setShowDeleteConfirm(false)}
           onConfirm={handleDelete}
+        />
+      )}
+
+      {showEditRecipe && (
+        <EditRecipeModal
+          recipe={recipe}
+          onClose={() => setShowEditRecipe(false)}
+          onSaved={() => {
+            setShowEditRecipe(false)
+            reload()
+          }}
         />
       )}
     </PageBackground>

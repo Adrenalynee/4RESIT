@@ -87,6 +87,7 @@ CREATE TABLE recipes (
   servings          SMALLINT NOT NULL DEFAULT 1 CHECK (servings > 0),
   source            TEXT NOT NULL DEFAULT '',
   favorite          BOOLEAN NOT NULL DEFAULT false,
+  difficulty        TEXT,
   created_at        TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at        TIMESTAMPTZ NOT NULL DEFAULT now()
 );

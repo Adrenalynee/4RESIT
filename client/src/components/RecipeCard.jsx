@@ -1,7 +1,9 @@
 import { Link } from 'react-router-dom'
 import cookingIconUrl from '../assets/cooking.svg'
+import { useRecipeTaxonomy } from '../context/RecipeTaxonomyContext'
 
 export default function RecipeCard({ recipe, to, rank }) {
+  const { getLabel } = useRecipeTaxonomy()
   return (
     <Link
       to={to ?? `/recipes/${recipe.id}`}
@@ -47,7 +49,7 @@ export default function RecipeCard({ recipe, to, rank }) {
         <div className="mt-2 flex flex-wrap gap-1">
           {recipe.tags.slice(0, 3).map((tag) => (
             <span key={tag} className="liquid-glass gold-glass gold-glass-light relative rounded-full px-2 py-0.5 text-xs">
-              <span className="relative text-stone-900 dark:text-stone-100">{tag}</span>
+              <span className="relative text-stone-900 dark:text-stone-100">{getLabel(tag)}</span>
             </span>
           ))}
         </div>

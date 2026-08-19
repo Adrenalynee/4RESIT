@@ -43,14 +43,36 @@ router.get('/:id/messages', requireCookbookRole(), async (req, res) => {
   res.json(await listMessages(req.params.id));
 });
 
+router.patch('/:id', requireCookbookRole('creator'), async (req, res) => {
+  const { name, description } = req.body || {};
+  if (name !== undefined && !name.trim()) return res.status(400).json({ error: 'Le nom du cookbook est requis' });
+
+  const fields = [];
+  const values = [];
+  if (name !== undefined) { values.push(name.trim()); fields.push(`name = $${values.length}`); }
+  if (description !== undefined) { values.push(description); fields.push(`description = $${values.length}`); }
+  if (fields.length > 0) {
+    values.push(req.params.id);
+    await pool.query(`UPDATE cookbooks SET ${fields.join(', ')} WHERE id = $${values.length}`, values);
+  }
+
+  const cookbook = await getCookbookDetail(req.params.id);
+  res.json(cookbook);
+});
+
+router.delete('/:id', requireCookbookRole('creator'), async (req, res) => {
+  await pool.query('DELETE FROM cookbooks WHERE id = $1', [req.params.id]);
+  res.json({ success: true });
+});
+
 router.post('/:id/members', requireCookbookRole('creator'), async (req, res) => {
-  const { email, role = 'reader' } = req.body || {};
-  if (!email) return res.status(400).json({ error: 'Email requis' });
+  const { identifier, role = 'reader' } = req.body || {};
+  if (!identifier) return res.status(400).json({ error: 'Email ou pseudo requis' });
   if (!ASSIGNABLE_ROLES.includes(role)) return res.status(400).json({ error: 'Rôle invalide' });
 
-  const { rows } = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
+  const { rows } = await pool.query('SELECT id FROM users WHERE email = $1 OR name = $1', [identifier]);
   const invitedUser = rows[0];
-  if (!invitedUser) return res.status(404).json({ error: 'Aucun utilisateur avec cet email' });
+  if (!invitedUser) return res.status(404).json({ error: 'Aucun utilisateur avec cet email ou ce pseudo' });
 
   const existingRole = await getMemberRole(req.params.id, invitedUser.id);
   if (existingRole) return res.status(409).json({ error: 'Cet utilisateur est déjà membre' });

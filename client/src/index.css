@@ -36,7 +36,7 @@ textarea:not(:disabled) {
 input::placeholder,
 textarea::placeholder {
   color: #000 !important;
-  opacity: 1 !important;
+  opacity: 0.45 !important;
 }
 
 .dark input:not(:disabled),
@@ -47,7 +47,7 @@ textarea::placeholder {
 .dark input::placeholder,
 .dark textarea::placeholder {
   color: #fff !important;
-  opacity: 1 !important;
+  opacity: 0.45 !important;
 }
 
 .dark {

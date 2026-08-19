@@ -21,6 +21,10 @@ export async function createRecipe(recipe) {
   return request('/recipes', { method: 'POST', body: recipe })
 }
 
+export async function importRecipeFromUrl(url) {
+  return request('/recipes/import-url', { method: 'POST', body: { url } })
+}
+
 export async function updateRecipe(id, patch) {
   return request(`/recipes/${id}`, { method: 'PATCH', body: patch })
 }

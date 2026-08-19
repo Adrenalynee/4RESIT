@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import * as api from '../api/recipesApi'
 import * as cookbooksApi from '../api/cookbooksApi'
 import { useAuth } from '../context/AuthContext'
+import { useRecipeTaxonomy } from '../context/RecipeTaxonomyContext'
 import RecipeCard from '../components/RecipeCard'
 import RecipeCardSkeleton from '../components/RecipeCardSkeleton'
 import ErrorState from '../components/ErrorState'
@@ -11,6 +12,7 @@ import NewRecipeModal from '../components/modals/NewRecipeModal'
 
 export default function RecipesPage() {
   const { user } = useAuth()
+  const { getLabel } = useRecipeTaxonomy()
   const navigate = useNavigate()
   const [recipes, setRecipes] = useState([])
   const [cookbooks, setCookbooks] = useState([])
@@ -97,7 +99,7 @@ export default function RecipesPage() {
           >
             <option value="">Toutes les catégories</option>
             {allTags.map((t) => (
-              <option key={t} value={t}>{t}</option>
+              <option key={t} value={t}>{getLabel(t)}</option>
             ))}
           </select>
           <input

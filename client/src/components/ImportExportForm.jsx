@@ -1,7 +1,5 @@
 import { useRef, useState } from 'react'
-import * as api from '../api/mockApi'
-import { useAuth } from '../context/AuthContext'
-import { csvToImportPayload, recipesToCsv } from '../utils/csv'
+import * as api from '../api/dataApi'
 
 function downloadBlob(content, type, filename) {
   const blob = new Blob([content], { type })
@@ -14,16 +12,14 @@ function downloadBlob(content, type, filename) {
 }
 
 export default function ImportExportForm() {
-  const { user } = useAuth()
   const fileInput = useRef(null)
   const [message, setMessage] = useState('')
   const [confirmExport, setConfirmExport] = useState(false)
 
   async function handleExport(format) {
-    const data = await api.exportUserData(user.id)
+    const data = await api.exportUserData(format)
     if (format === 'csv') {
-      const cookbooksById = Object.fromEntries(data.cookbooks.map((cb) => [cb.id, cb]))
-      downloadBlob(recipesToCsv(data.recipes, cookbooksById), 'text/csv', 'supmeal-export.csv')
+      downloadBlob(data, 'text/csv', 'supmeal-export.csv')
     } else {
       downloadBlob(JSON.stringify(data, null, 2), 'application/json', 'supmeal-export.json')
     }
@@ -35,12 +31,11 @@ export default function ImportExportForm() {
     if (!file) return
     try {
       const text = await file.text()
-      const isCsv = file.name.toLowerCase().endsWith('.csv')
-      const payload = isCsv ? csvToImportPayload(text) : JSON.parse(text)
-      await api.importUserData(user.id, payload)
-      setMessage('Import réussi ! Vos recettes et cookbooks ont été ajoutés.')
-    } catch {
-      setMessage("Erreur : le fichier n'est pas un export SUPMEAL valide (JSON ou CSV).")
+      const format = file.name.toLowerCase().endsWith('.csv') ? 'csv' : 'json'
+      const result = await api.importUserData(format, text)
+      setMessage(`Import réussi ! ${result.cookbooksImported} cookbook(s) et ${result.recipesImported} recette(s) ajouté(s).`)
+    } catch (err) {
+      setMessage(err.message || "Erreur : le fichier n'est pas un export SUPMEAL valide (JSON ou CSV).")
     } finally {
       if (fileInput.current) fileInput.current.value = ''
     }

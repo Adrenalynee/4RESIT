@@ -12,6 +12,8 @@ import planningRouter from './routes/planning.js';
 import allergensRouter from './routes/allergens.js';
 import dietsRouter from './routes/diets.js';
 import cuisinesRouter from './routes/cuisines.js';
+import mealTypesRouter from './routes/mealTypes.js';
+import difficultyRouter from './routes/difficulty.js';
 import { attachChat } from './sockets/chat.js';
 import passport from './config/passport.js';
 
@@ -34,6 +36,8 @@ app.use('/api/planning', planningRouter);
 app.use('/api/allergens', allergensRouter);
 app.use('/api/diets', dietsRouter);
 app.use('/api/cuisines', cuisinesRouter);
+app.use('/api/meal-types', mealTypesRouter);
+app.use('/api/difficulty-levels', difficultyRouter);
 
 app.use((err, req, res, next) => {
   console.error(err);
