@@ -6,7 +6,7 @@ export async function findOrCreateGoogleUser(profile) {
   const googleId = profile.id;
   const email = profile.emails?.[0]?.value;
   const displayName = profile.displayName || email?.split('@')[0] || 'Utilisateur Google';
-  const avatarUrl = profile.photos?.[0]?.value || `https://i.pravatar.cc/150?u=${encodeURIComponent(email || googleId)}`;
+  const avatarUrl = profile.photos?.[0]?.value || null;
 
   const { rows: linked } = await pool.query(
     "SELECT user_id FROM oauth_accounts WHERE provider = 'google' AND provider_user_id = $1",

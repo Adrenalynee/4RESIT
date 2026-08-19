@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import * as api from '../api/recipesApi'
 import * as cookbooksApi from '../api/cookbooksApi'
+import { uploadImage } from '../api/uploadsApi'
 import { useAuth } from '../context/AuthContext'
 import { useRecipeTaxonomy } from '../context/RecipeTaxonomyContext'
 import { canEditRecipes, getMyRole } from '../utils/permissions'
@@ -21,6 +22,7 @@ export default function NewRecipeForm({ onCreated, defaultCookbookId, initialDat
   const [diets, setDiets] = useState(initialData?.diets || [])
   const [difficulty, setDifficulty] = useState(initialData?.difficulty || '')
   const [image, setImage] = useState(initialData?.image || '')
+  const [imagePreview, setImagePreview] = useState(initialData?.image || '')
   const [sourceType, setSourceType] = useState(initialData?.source && isValidUrl(initialData.source) ? 'url' : 'personal')
   const [sourceUrl, setSourceUrl] = useState(initialData?.source || '')
   const [ingredients, setIngredients] = useState(
@@ -28,6 +30,7 @@ export default function NewRecipeForm({ onCreated, defaultCookbookId, initialDat
   )
   const [steps, setSteps] = useState(initialData?.steps?.length ? initialData.steps : [''])
   const [error, setError] = useState('')
+  const [imageUploading, setImageUploading] = useState(false)
 
   useEffect(() => {
     cookbooksApi.getCookbooks(user.id).then((all) => {
@@ -47,15 +50,25 @@ export default function NewRecipeForm({ onCreated, defaultCookbookId, initialDat
     setList(list.includes(value) ? list.filter((v) => v !== value) : [...list, value])
   }
 
-  function handleImageChange(e) {
+  async function handleImageChange(e) {
     const file = e.target.files?.[0]
+    e.target.value = ''
     if (!file) {
       setImage('')
+      setImagePreview('')
       return
     }
-    const reader = new FileReader()
-    reader.onload = () => setImage(reader.result)
-    reader.readAsDataURL(file)
+    setImagePreview(URL.createObjectURL(file))
+    setImageUploading(true)
+    setError('')
+    try {
+      const { url } = await uploadImage(file)
+      setImage(url)
+    } catch (err) {
+      setError(err.message)
+    } finally {
+      setImageUploading(false)
+    }
   }
 
   async function handleSubmit(e) {
@@ -234,10 +247,11 @@ export default function NewRecipeForm({ onCreated, defaultCookbookId, initialDat
           >
             <span className="relative text-stone-900 dark:text-white">Choisir un fichier</span>
           </label>
-          {image && <span className="text-xs text-stone-700 dark:text-stone-300">Image sélectionnée</span>}
+          {imageUploading && <span className="text-xs text-stone-700 dark:text-stone-300">Envoi en cours…</span>}
+          {!imageUploading && imagePreview && <span className="text-xs text-stone-700 dark:text-stone-300">Image sélectionnée</span>}
         </div>
-        {image && (
-          <img src={image} alt="Aperçu" className="relative mt-2 h-32 w-full rounded-md object-cover" />
+        {imagePreview && (
+          <img src={imagePreview} alt="Aperçu" className="relative mt-2 h-32 w-full rounded-md object-cover" />
         )}
       </div>
 
@@ -331,7 +345,8 @@ export default function NewRecipeForm({ onCreated, defaultCookbookId, initialDat
         )}
         <button
           type="submit"
-          className="liquid-glass gold-glass relative flex-1 rounded-full py-2 shadow-[0_4px_16px_rgba(0,0,0,0.25)] transition hover:scale-105 hover:brightness-95 active:scale-100"
+          disabled={imageUploading}
+          className="liquid-glass gold-glass relative flex-1 rounded-full py-2 shadow-[0_4px_16px_rgba(0,0,0,0.25)] transition hover:scale-105 hover:brightness-95 active:scale-100 disabled:cursor-not-allowed disabled:opacity-50"
         >
           <span className="relative text-sm font-semibold text-stone-900 dark:text-white">
             {editingRecipeId ? 'Enregistrer les modifications' : 'Créer la recette'}

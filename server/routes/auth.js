@@ -40,13 +40,12 @@ router.post('/register', authLimiter, async (req, res) => {
   }
 
   const passwordHash = await bcrypt.hash(password, 10);
-  const avatarUrl = `https://i.pravatar.cc/150?u=${encodeURIComponent(email)}`;
 
   let userId;
   try {
     const { rows } = await pool.query(
-      `INSERT INTO users (name, email, password_hash, avatar_url) VALUES ($1, $2, $3, $4) RETURNING id`,
-      [name, email, passwordHash, avatarUrl],
+      `INSERT INTO users (name, email, password_hash) VALUES ($1, $2, $3) RETURNING id`,
+      [name, email, passwordHash],
     );
     userId = rows[0].id;
   } catch (err) {

@@ -195,7 +195,7 @@ export default function RecipeDetailPage() {
                   role="presentation"
                   aria-hidden="true"
                   className="icon-shimmer relative h-20 w-20"
-                  style={{ WebkitMaskImage: `url(${cookingIconUrl})`, maskImage: `url(${cookingIconUrl})` }}
+                  style={{ WebkitMaskImage: `url("${cookingIconUrl}")`, maskImage: `url("${cookingIconUrl}")` }}
                 />
               </div>
             )}

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
-import * as api from '../api/mockApi'
+import * as recipesApi from '../api/recipesApi'
+import * as planningApi from '../api/planningApi'
 import { useAuth } from '../context/AuthContext'
 import PageBackground from '../components/PageBackground'
 import Skeleton from '../components/Skeleton'
@@ -46,8 +47,8 @@ export default function PlanningPage() {
 
   function reload() {
     setError('')
-    return api
-      .getRecipes({ accessibleTo: user.id })
+    return recipesApi
+      .getRecipes()
       .then((all) => {
         setRecipes(all)
         setLoading(false)
@@ -68,41 +69,28 @@ export default function PlanningPage() {
   const weekIso = toISODate(weekStart)
   const isPastWeek = toISODate(days[6]) < todayIso
 
+  const [shoppingList, setShoppingList] = useState([])
+  const [shoppingListError, setShoppingListError] = useState('')
+
+  function reloadShoppingList() {
+    setShoppingListError('')
+    return planningApi.getShoppingList(weekIso).then(setShoppingList).catch((err) => setShoppingListError(err.message))
+  }
+
+  useEffect(() => {
+    reloadShoppingList()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [weekIso])
+
   function recipesForDay(day) {
     const iso = toISODate(day)
     return recipes.filter((r) => r.plannedDates?.includes(iso))
-  }
-
-  const weekRecipes = useMemo(() => days.flatMap(recipesForDay), [days, recipes])
-
-  function computeShoppingList(weekRecipesList) {
-    const merged = new Map()
-    weekRecipesList.forEach((r) => {
-      r.ingredients.forEach((ing) => {
-        const unit = (ing.unit || '').trim()
-        const key = `${ing.name.trim().toLowerCase()}|${unit.toLowerCase()}`
-        const qty = Number(ing.quantity)
-        if (!merged.has(key)) {
-          merged.set(key, { key, name: ing.name.trim(), unit, qty: Number.isNaN(qty) ? null : qty, mixed: Number.isNaN(qty) })
-        } else {
-          const entry = merged.get(key)
-          if (!Number.isNaN(qty) && entry.qty !== null) {
-            entry.qty += qty
-          } else {
-            entry.mixed = true
-          }
-        }
-      })
-    })
-    return [...merged.values()]
   }
 
   function formatItemLabel(item, qty) {
     const qtyLabel = item.mixed || qty == null ? '' : `${qty}`
     return `${qtyLabel}${item.unit ? ` ${item.unit}` : ''} ${item.name}`.trim()
   }
-
-  const shoppingList = useMemo(() => computeShoppingList(weekRecipes), [weekRecipes])
 
   function availableRecipes(day) {
     const iso = toISODate(day)
@@ -111,13 +99,15 @@ export default function PlanningPage() {
 
   async function assignRecipe(day, recipeId) {
     if (!recipeId || toISODate(day) < todayIso) return
-    await api.addPlannedDate(recipeId, toISODate(day))
+    await recipesApi.addPlannedDate(recipeId, toISODate(day))
     reload()
+    reloadShoppingList()
   }
 
   async function unassignRecipe(recipeId, day) {
-    await api.removePlannedDate(recipeId, toISODate(day))
+    await recipesApi.removePlannedDate(recipeId, toISODate(day))
     reload()
+    reloadShoppingList()
   }
 
   function toggleShoppingItem(item) {
@@ -245,6 +235,8 @@ export default function PlanningPage() {
               <p className="mt-3 text-sm text-stone-500 dark:text-stone-400">
                 Liste de courses indisponible pour une semaine déjà passée.
               </p>
+            ) : shoppingListError ? (
+              <p className="mt-3 text-sm text-red-600 dark:text-red-400">{shoppingListError}</p>
             ) : shoppingList.length === 0 ? (
               <p className="mt-3 text-sm text-stone-700 dark:text-stone-300">Aucune recette planifiée cette semaine.</p>
             ) : (

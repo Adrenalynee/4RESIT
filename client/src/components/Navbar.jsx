@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import defaultAvatar from '../assets/user-icon.svg'
 
 const linkClass = ({ isActive }) =>
   `relative block rounded-full px-3 py-1.5 text-sm font-semibold transition-colors ${
@@ -61,7 +62,7 @@ export default function Navbar({ sticky = false, logoOnly = false }) {
                 ))}
               </div>
               <div className="liquid-glass liquid-glass-opaque flex items-center gap-3 rounded-full py-1.5 pl-1.5 pr-2">
-                <img src={user.avatar} alt={user.name} className="relative h-8 w-8 rounded-full object-cover" />
+                <img src={user.avatar || defaultAvatar} alt={user.name} className="relative h-8 w-8 rounded-full object-cover" />
                 <span className="relative text-sm font-medium text-stone-900 dark:text-stone-100">{user.name}</span>
                 <button
                   onClick={handleLogout}
@@ -91,7 +92,7 @@ export default function Navbar({ sticky = false, logoOnly = false }) {
           <nav className="liquid-glass overflow-hidden rounded-2xl">
             <div className="relative bg-white/95 p-3 dark:bg-black/95">
               <div className="flex items-center gap-2 pb-3">
-                <img src={user.avatar} alt={user.name} className="relative h-8 w-8 rounded-full object-cover" />
+                <img src={user.avatar || defaultAvatar} alt={user.name} className="relative h-8 w-8 rounded-full object-cover" />
                 <span className="text-sm font-medium text-stone-900 dark:text-stone-100">{user.name}</span>
               </div>
               <div className="space-y-1">

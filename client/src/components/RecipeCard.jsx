@@ -29,7 +29,7 @@ export default function RecipeCard({ recipe, to, rank }) {
               role="presentation"
               aria-hidden="true"
               className="icon-shimmer relative h-12 w-12"
-              style={{ WebkitMaskImage: `url(${cookingIconUrl})`, maskImage: `url(${cookingIconUrl})` }}
+              style={{ WebkitMaskImage: `url("${cookingIconUrl}")`, maskImage: `url("${cookingIconUrl}")` }}
             />
           </div>
         )}

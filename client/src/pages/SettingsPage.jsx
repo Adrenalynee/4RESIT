@@ -4,7 +4,9 @@ import * as api from '../api/usersApi'
 import { getAllergens } from '../api/allergensApi'
 import { getDiets } from '../api/dietsApi'
 import { getCuisines } from '../api/cuisinesApi'
+import { uploadImage } from '../api/uploadsApi'
 import { useAuth } from '../context/AuthContext'
+import defaultAvatar from '../assets/user-icon.svg'
 import PageBackground from '../components/PageBackground'
 import ImportExportModal from '../components/modals/ImportExportModal'
 import ConfirmDeleteAccountModal from '../components/modals/ConfirmDeleteAccountModal'
@@ -14,7 +16,7 @@ export default function SettingsPage() {
   const { user, refreshUser, logout } = useAuth()
   const navigate = useNavigate()
   const [name, setName] = useState(user.name || '')
-  const [avatarPreview, setAvatarPreview] = useState(user.avatar || '')
+  const [avatarPreview, setAvatarPreview] = useState(user.avatar || defaultAvatar)
   const [diets, setDiets] = useState(user.preferences?.diets || [])
   const [dietOptions, setDietOptions] = useState([])
   const [allergens, setAllergens] = useState([])
@@ -29,6 +31,7 @@ export default function SettingsPage() {
   const [showImportExport, setShowImportExport] = useState(false)
   const [showDeleteAccount, setShowDeleteAccount] = useState(false)
   const [cropSrc, setCropSrc] = useState(null)
+  const [avatarError, setAvatarError] = useState('')
 
   useEffect(() => {
     getAllergens().then(setAllergens)
@@ -73,10 +76,17 @@ export default function SettingsPage() {
     reader.readAsDataURL(file)
   }
 
-  function handleCropConfirm(croppedDataUrl) {
+  async function handleCropConfirm(croppedDataUrl) {
     setAvatarPreview(croppedDataUrl)
     setCropSrc(null)
-    saveProfile({ avatar: croppedDataUrl })
+    setAvatarError('')
+    try {
+      const blob = await (await fetch(croppedDataUrl)).blob()
+      const { url } = await uploadImage(blob)
+      await saveProfile({ avatar: url })
+    } catch (err) {
+      setAvatarError(err.message)
+    }
   }
 
   async function handleChangePassword(e) {
@@ -129,6 +139,7 @@ export default function SettingsPage() {
                     >
                       <span className="relative text-stone-900 dark:text-white">Changer l'avatar</span>
                     </label>
+                    {avatarError && <p className="relative mt-1 text-xs text-red-600 dark:text-red-400">{avatarError}</p>}
                   </div>
                 </div>
                 <div>
