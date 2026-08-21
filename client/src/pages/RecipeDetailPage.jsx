@@ -64,10 +64,10 @@ export default function RecipeDetailPage() {
       return
     }
     setRoleLoaded(false)
-    cookbooksApi.getCookbookById(cookbookId).then((cb) => {
-      setMyRole(getMyRole(cb, user.id))
-      setRoleLoaded(true)
-    })
+    cookbooksApi.getCookbookById(cookbookId)
+      .then((cb) => setMyRole(getMyRole(cb, user.id)))
+      .catch(() => setMyRole(null))
+      .finally(() => setRoleLoaded(true))
   }, [cookbookId, user.id])
 
   if (recipeError) {
