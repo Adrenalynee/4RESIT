@@ -131,6 +131,14 @@ CREATE TABLE recipe_planned_dates (
 );
 CREATE INDEX idx_recipe_planned_dates_date ON recipe_planned_dates(planned_date);
 
+CREATE TABLE shopping_checks (
+  user_id    UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  week_start DATE NOT NULL,
+  checked    JSONB NOT NULL DEFAULT '{}'::jsonb,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  PRIMARY KEY (user_id, week_start)
+);
+
 CREATE TABLE comments (
   id         UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   recipe_id  UUID NOT NULL REFERENCES recipes(id) ON DELETE CASCADE,

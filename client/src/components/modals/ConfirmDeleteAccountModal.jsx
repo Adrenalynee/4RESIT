@@ -1,14 +1,14 @@
 import { useState } from 'react'
 import Modal from '../Modal'
 
-export default function ConfirmDeleteAccountModal({ onClose, onConfirm }) {
+export default function ConfirmDeleteAccountModal({ onClose, onConfirm, requirePassword = true }) {
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [deleting, setDeleting] = useState(false)
 
   async function handleConfirm() {
     setError('')
-    if (!password) {
+    if (requirePassword && !password) {
       setError('Veuillez saisir votre mot de passe.')
       return
     }
@@ -28,13 +28,15 @@ export default function ConfirmDeleteAccountModal({ onClose, onConfirm }) {
       <p className="relative mt-2 text-sm text-stone-700 dark:text-stone-300">
         Voulez-vous vraiment supprimer votre compte ? Vos cookbooks et recettes personnelles seront définitivement perdus. Cette action est irréversible.
       </p>
-      <input
-        type="password"
-        placeholder="Confirmez avec votre mot de passe"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-        className="relative mt-4 w-full rounded-md border border-white/40 bg-white/70 px-3 py-2 text-sm text-stone-900 placeholder:text-stone-500 focus:border-(--shimmer-2) focus:outline-none focus:ring-2 focus:ring-(--shimmer-2)/40 dark:border-white/15 dark:bg-black/40 dark:text-white dark:placeholder:text-white"
-      />
+      {requirePassword && (
+        <input
+          type="password"
+          placeholder="Confirmez avec votre mot de passe"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className="relative mt-4 w-full rounded-md border border-white/40 bg-white/70 px-3 py-2 text-sm text-stone-900 placeholder:text-stone-500 focus:border-(--shimmer-2) focus:outline-none focus:ring-2 focus:ring-(--shimmer-2)/40 dark:border-white/15 dark:bg-black/40 dark:text-white dark:placeholder:text-white"
+        />
+      )}
       {error && <p className="relative mt-2 text-sm text-red-500">{error}</p>}
       <div className="relative mt-6 flex justify-end gap-2">
         <button

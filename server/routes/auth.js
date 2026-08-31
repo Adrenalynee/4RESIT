@@ -6,6 +6,7 @@ import { pool } from '../db.js';
 import { requireAuth } from '../middleware/auth.js';
 import { getUserById } from '../utils/users.js';
 import { isPasswordStrong } from '../utils/password.js';
+import { isValidEmail } from '../utils/email.js';
 import passport from '../config/passport.js';
 
 const router = Router();
@@ -26,6 +27,9 @@ router.post('/register', authLimiter, async (req, res) => {
   const { name, email, password } = req.body || {};
   if (!name || !email || !password) {
     return res.status(400).json({ error: 'Pseudo, email et mot de passe requis' });
+  }
+  if (!isValidEmail(email)) {
+    return res.status(400).json({ error: 'Format d\'email invalide' });
   }
   if (!isPasswordStrong(password)) {
     return res.status(400).json({ error: 'Le mot de passe ne respecte pas les critères de sécurité requis' });

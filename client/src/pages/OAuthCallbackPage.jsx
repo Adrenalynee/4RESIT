@@ -15,7 +15,7 @@ export default function OAuthCallbackPage() {
       return
     }
     loginWithToken(token)
-      .then(() => navigate('/recipes'))
+      .then(() => navigate('/'))
       .catch(() => navigate('/login'))
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])

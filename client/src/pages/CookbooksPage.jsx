@@ -72,7 +72,7 @@ export default function CookbooksPage() {
           ) : error ? (
             <ErrorState message={error} onRetry={reload} />
           ) : cookbooks.length === 0 ? (
-            <p className="text-sm text-white/80">Aucun cookbook pour l'instant.</p>
+            <p className="text-white/80">Aucun cookbook pour l'instant.</p>
           ) : (
             <>
               <div className="w-full md:hidden">

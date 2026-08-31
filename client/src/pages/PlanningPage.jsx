@@ -1,21 +1,13 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import * as recipesApi from '../api/recipesApi'
 import * as planningApi from '../api/planningApi'
-import { useAuth } from '../context/AuthContext'
 import PageBackground from '../components/PageBackground'
 import Skeleton from '../components/Skeleton'
 import ErrorState from '../components/ErrorState'
 import { toISODate } from '../utils/date'
 
-function loadCheckedState(storageKey) {
-  try {
-    const raw = localStorage.getItem(storageKey)
-    return raw ? JSON.parse(raw) : {}
-  } catch {
-    return {}
-  }
-}
+const SAVE_DEBOUNCE_MS = 400
 
 function getMonday(date) {
   const d = new Date(date)
@@ -33,17 +25,12 @@ function addDays(date, amount) {
 }
 
 export default function PlanningPage() {
-  const { user } = useAuth()
-  const storageKey = `supmeal_shopping_${user.id}`
   const [weekStart, setWeekStart] = useState(() => getMonday(new Date()))
   const [recipes, setRecipes] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [checkedByWeek, setCheckedByWeek] = useState(() => loadCheckedState(storageKey))
-
-  useEffect(() => {
-    localStorage.setItem(storageKey, JSON.stringify(checkedByWeek))
-  }, [storageKey, checkedByWeek])
+  const [checkedByWeek, setCheckedByWeek] = useState({})
+  const saveTimers = useRef({})
 
   function reload() {
     setError('')
@@ -82,6 +69,22 @@ export default function PlanningPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [weekIso])
 
+  useEffect(() => {
+    if (isPastWeek || checkedByWeek[weekIso] !== undefined) return
+    planningApi
+      .getShoppingChecks(weekIso)
+      .then((checked) => setCheckedByWeek((prev) => ({ ...prev, [weekIso]: checked })))
+      .catch(() => setCheckedByWeek((prev) => ({ ...prev, [weekIso]: {} })))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [weekIso, isPastWeek])
+
+  useEffect(() => {
+    const timers = saveTimers.current
+    return () => {
+      Object.values(timers).forEach(clearTimeout)
+    }
+  }, [])
+
   function recipesForDay(day) {
     const iso = toISODate(day)
     return recipes.filter((r) => r.plannedDates?.includes(iso))
@@ -110,6 +113,13 @@ export default function PlanningPage() {
     reloadShoppingList()
   }
 
+  function scheduleSave(week, checked) {
+    clearTimeout(saveTimers.current[week])
+    saveTimers.current[week] = setTimeout(() => {
+      planningApi.saveShoppingChecks(week, checked).catch(() => {})
+    }, SAVE_DEBOUNCE_MS)
+  }
+
   function toggleShoppingItem(item) {
     setCheckedByWeek((prev) => {
       const weekChecked = { ...(prev[weekIso] || {}) }
@@ -121,6 +131,7 @@ export default function PlanningPage() {
       } else {
         weekChecked[item.key] = isMixed ? true : item.qty
       }
+      scheduleSave(weekIso, weekChecked)
       return { ...prev, [weekIso]: weekChecked }
     })
   }

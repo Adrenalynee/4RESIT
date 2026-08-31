@@ -242,7 +242,7 @@ export default function RecipeDetailPage() {
                     <button
                       onClick={() => setShowDeleteConfirm(true)}
                       aria-label="Supprimer la recette"
-                      className="liquid-glass relative flex h-9 w-9 cursor-pointer items-center justify-center rounded-full text-black transition hover:scale-105 hover:brightness-125 active:scale-100"
+                      className="liquid-glass relative flex h-9 w-9 cursor-pointer items-center justify-center rounded-full text-black transition hover:scale-105 hover:brightness-125 active:scale-100 dark:text-white"
                     >
                       <Icon svg={trashIcon} className="relative text-base" />
                     </button>
@@ -303,7 +303,7 @@ export default function RecipeDetailPage() {
                     value={planDate}
                     min={todayIso}
                     onChange={(e) => setPlanDate(e.target.value)}
-                    className="rounded-md border border-white/40 bg-white/70 px-3 py-2 text-sm text-stone-900 placeholder:text-stone-500 focus:border-(--shimmer-2) focus:outline-none focus:ring-2 focus:ring-(--shimmer-2)/40 dark:border-white/15 dark:bg-black/40 dark:text-white dark:placeholder:text-white"
+                    className="rounded-md border border-white/40 bg-white/70 px-3 py-2 text-sm text-stone-900 placeholder:text-stone-500 focus:border-(--shimmer-2) focus:outline-none focus:ring-2 focus:ring-(--shimmer-2)/40 dark:border-white/15 dark:bg-black/40 dark:text-white dark:placeholder:text-white dark:[&::-webkit-calendar-picker-indicator]:invert"
                   />
                   <button
                     type="submit"

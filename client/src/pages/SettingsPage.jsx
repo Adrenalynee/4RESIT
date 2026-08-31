@@ -314,7 +314,11 @@ export default function SettingsPage() {
 
       {showImportExport && <ImportExportModal onClose={() => setShowImportExport(false)} />}
       {showDeleteAccount && (
-        <ConfirmDeleteAccountModal onClose={() => setShowDeleteAccount(false)} onConfirm={handleDeleteAccount} />
+        <ConfirmDeleteAccountModal
+          onClose={() => setShowDeleteAccount(false)}
+          onConfirm={handleDeleteAccount}
+          requirePassword={user.hasPassword}
+        />
       )}
       {cropSrc && (
         <CropAvatarModal imageSrc={cropSrc} onClose={() => setCropSrc(null)} onConfirm={handleCropConfirm} />

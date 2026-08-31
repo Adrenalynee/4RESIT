@@ -1,4 +1,5 @@
 import { findRecipeIds, shapeRecipes } from './recipes.js';
+import { pool } from '../db.js';
 
 function addDaysIso(iso, amount) {
   const d = new Date(`${iso}T00:00:00Z`);
@@ -20,7 +21,7 @@ export async function getShoppingList(userId, weekStart) {
         const unit = (ing.unit || '').trim();
         const name = ing.name.trim();
         const key = `${name.toLowerCase()}|${unit.toLowerCase()}`;
-        const qty = Number(ing.quantity);
+        const qty = ing.quantity == null || ing.quantity === '' ? NaN : Number(ing.quantity);
 
         if (!merged.has(key)) {
           merged.set(key, { key, name, unit, qty: Number.isNaN(qty) ? null : qty, mixed: Number.isNaN(qty) });
@@ -36,4 +37,21 @@ export async function getShoppingList(userId, weekStart) {
     }
   }
   return [...merged.values()];
+}
+
+export async function getShoppingChecks(userId, weekStart) {
+  const { rows } = await pool.query(
+    'SELECT checked FROM shopping_checks WHERE user_id = $1 AND week_start = $2',
+    [userId, weekStart],
+  );
+  return rows[0]?.checked || {};
+}
+
+export async function saveShoppingChecks(userId, weekStart, checked) {
+  await pool.query(
+    `INSERT INTO shopping_checks (user_id, week_start, checked)
+     VALUES ($1, $2, $3)
+     ON CONFLICT (user_id, week_start) DO UPDATE SET checked = $3, updated_at = now()`,
+    [userId, weekStart, JSON.stringify(checked)],
+  );
 }

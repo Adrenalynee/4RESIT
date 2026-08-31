@@ -17,3 +17,7 @@ CREATE TRIGGER trg_cookbooks_updated_at
 CREATE TRIGGER trg_recipes_updated_at
   BEFORE UPDATE ON recipes
   FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+CREATE TRIGGER trg_shopping_checks_updated_at
+  BEFORE UPDATE ON shopping_checks
+  FOR EACH ROW EXECUTE FUNCTION set_updated_at();

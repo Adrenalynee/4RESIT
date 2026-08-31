@@ -28,7 +28,7 @@ export default function Carousel({
   }
 
   if (items.length === 0) {
-    return <p className="text-sm text-white/80">{emptyMessage}</p>
+    return <p className="text-white/80">{emptyMessage}</p>
   }
 
   return (

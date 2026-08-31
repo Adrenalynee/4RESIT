@@ -62,6 +62,10 @@ export default function RecipesPage() {
     return [...new Set(recipes.flatMap((r) => r.tags))].sort()
   }, [recipes])
 
+  const hasActiveFilters = Boolean(
+    query || cookbookId || tag || ingredient || favoriteOnly || maxPrepTime || maxCookTime,
+  )
+
   return (
     <PageBackground>
       <div className="mx-auto max-w-6xl px-4 py-8">
@@ -152,7 +156,9 @@ export default function RecipesPage() {
         ) : error ? (
           <ErrorState message={error} onRetry={loadRecipes} />
         ) : recipes.length === 0 ? (
-          <p className="mt-8 text-center text-white/80">Aucune recette ne correspond à ces critères.</p>
+          <p className="mt-8 text-center text-white/80">
+            {hasActiveFilters ? 'Aucune recette ne correspond à ces critères.' : 'Aucune recette créée pour l\'instant.'}
+          </p>
         ) : (
           <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {recipes.map((recipe) => (

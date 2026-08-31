@@ -78,7 +78,7 @@ router.delete('/me', async (req, res) => {
   const { password } = req.body || {};
   const { rows } = await pool.query('SELECT password_hash, avatar_url FROM users WHERE id = $1', [req.userId]);
   const hash = rows[0]?.password_hash;
-  if (!hash || !password || !(await bcrypt.compare(password, hash))) {
+  if (hash && !(await bcrypt.compare(password || '', hash))) {
     return res.status(401).json({ error: 'Mot de passe incorrect' });
   }
 
